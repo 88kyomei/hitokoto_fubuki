@@ -322,6 +322,117 @@ const eventLines = {
 "12-31": ["今日は大晦日ね、充実した一年だった？　来年もよろしくね"]
 };
 
+const achievementLines = [];
+  
+const achievements = {
+
+  morning: {
+    lines: [
+      "おはよう、今日もいい朝ね",
+      "太陽の光を浴びると目が覚めるらしいわね　　…ここは日光が届かないけど…",
+      "忘れ物はない？",
+      "遅刻しないようにね",
+      "ツゲ起きて、朝ごはんよ"
+    ],
+    reward: "（朝コンプセリフここに入れる）",
+    unlocked: false
+  },
+
+  noon1: {
+    lines: [
+      "さて、今日も仕事しますか",
+      "坑道の見回りに行ってこようかな",
+      "ちょっとお腹が空いてきたわね…",
+      "今日片づける仕事はこれとあれと……",
+      "書類、誰か代わりに読んでくれないかしら"
+    ],
+    reward: "私と喋ってないで、やることやりなさいよ",
+    unlocked: false
+  },
+
+  noon2: {
+    lines: [
+      "ちょっと眠いわね…",
+      "今日のおやつは何にしようかしら",
+      "午後もわりと仕事あるわね…",
+      "ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
+      "(ペンを持つと絵が描きたくなる…)"
+    ],
+    reward: "そろそろおやつにしましょうか。あなたも食べる？",
+    unlocked: false
+  },
+
+  evening: {
+    lines: [
+      "今日の夜ご飯は何にしようかしら",
+      "これ、今日中に終わるのかな…",
+      "不意に屋台の食べ物が食べたくなってきたわ",
+      "そろそろ坑道を見に行かないと",
+      "(夜ご飯、ルイベじゃないといいな…)"
+    ],
+    reward: "いい匂い…　これはカンボジアブロッコリー…？",
+    unlocked: false
+  },
+
+  night: {
+    lines: [
+      "今日も一日、お疲れ様",
+      "夜ご飯おいしかったわ、どこの具材使ってたんだろう",
+      "食後のデザートってずっと食べたくなるわよね",
+      "私はそろそろ寝るわ。おやすみなさい",
+      "(明日はあれやらないと…)"
+    ],
+    reward: "21時就寝は早い？千年前の私に言ってちょうだい",
+    unlocked: false
+  },
+
+  late: {
+    lines: [
+      "すやすや…(日常の夢を見ているようだ)",
+      "むにゃ…(仕事の夢を見ているようだ)",
+      "………(ぐっすり眠っているようだ)",
+      "…こんな時間に何をしてるの？",
+      "早く寝なさい、身体に障るわよ"
+    ],
+    reward: "すー…すー…(おいしいごはんの夢を見ているようだ)",
+    unlocked: false
+  },
+
+  rare: {
+    lines: [
+      "炎の魔力と轟音……　またやったわねマッヒー…",
+      "もう少し暇だったらバネッサまで遊びに行くんだけど",
+      "…みんな何してるかなぁ",
+      "カップラーメン食べたいなぁ",
+      "護王様ってあの身体でどうやって仕事してるんだろ"
+    ],
+    reward: "もっと私のことを知りたい？　…もう十分知ってるわよ",
+    unlocked: false
+  },
+
+  seasonal: {
+    lines: [
+      "あけましておめでとう。今年も良い一年にしましょうね",
+      "今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…",
+      "今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ",
+      "今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…",
+      "…今日はあの場所の……何周年なんだ…？",
+      "トリックオアトリート！　冗談よ、お菓子いる？",
+      "今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…",
+      "今日は大晦日ね、充実した一年だった？　来年もよろしくね"
+    ],
+    reward: "そういえば、あなたの誕生日っていつなの？",
+    unlocked: false
+  }
+
+};
+
+achievements.all = {
+  lines: Object.values(linesByCategory).flat(),
+  reward: "いらっしゃい、今日はどうしたの？",
+  unlocked: false
+};
+  
 // ===== 図鑑 =====
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
@@ -360,7 +471,8 @@ function renderLog(){
     ["夜", timeLines.night],
     ["深夜", timeLines.midnight],
     ["季節", Object.values(eventLines).flat()],
-    ["レア", [...rareLines.normal, ...rareLines.midnight]]
+    ["レア", [...rareLines.normal, ...rareLines.midnight]],
+    ["アチーブメント", achievementLines]
   ];
 
   sections.forEach(([name, arr])=>{
@@ -471,6 +583,36 @@ function typeText(text){
   step();
 }
 
+// アチーブメントが出た時
+function checkAchievements() {
+  for (let key in achievements) {
+    const ach = achievements[key];
+
+    if (ach.unlocked) continue;
+
+    const allSeen = ach.lines.every(line => seenLines.includes(line));
+
+    if (allSeen) {
+      ach.unlocked = true;
+
+      // 解放演出
+      showLine("✨ " + ach.reward, false, true);
+
+      // 元カテゴリに追加
+      if (timeLines[key]) {
+        timeLines[key].push(ach.reward);
+      }
+
+      if (rareLines[key]) {
+        rareLines[key].push(ach.reward);
+      }
+
+      // アチーブメント一覧に追加
+      achievementLines.push(ach.reward);
+    }
+  }
+}
+  
 // 外クリックで閉じる
 document.getElementById("overlay").addEventListener("click", () => {
   toggleLog();
