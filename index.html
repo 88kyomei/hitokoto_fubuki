@@ -121,6 +121,16 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2a6fff;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+
+  text-shadow: 0 0 6px rgba(80,150,255,0.3);
+}
+  
 .character {
   width: 260px;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
@@ -183,6 +193,25 @@ body {
   pointer-events: auto;
 }
 
+.closeBtn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #7fbce0;
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.closeBtn:hover {
+  color: #2a6fff;
+  transform: scale(1.2);
+}
+
 </style>
 </head>
 
@@ -195,11 +224,14 @@ body {
 </div>
 
 <div id="log" class="log">
-  <button onclick="toggleLog()">閉じる</button>
+  <button class="closeBtn" onclick="toggleLog()">×</button>
   <div id="logContent"></div>
 </div>
 
 <div class="container" onclick="speak()">
+
+  <div class="title">ひとことフブキ</div> <!-- ←追加 -->
+
   <img id="img" src="fubuki.png" class="character">
   <div id="speech" class="speech">（クリックしてね）</div>
 </div>
