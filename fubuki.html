@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ひとことフブキ</title>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5fbff;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* メニュー */
+.menu {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.menu button {
+  padding: 8px 14px;
+  border: 1px solid #7fbce0;
+  background: rgba(255,255,255,0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.menu button:hover {
+  background: #dff4ff;
+}
+
+/* 図鑑 */
+.log {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+
+  border-radius: 12px;
+  border: 1px solid #7fbce0;
+  background: rgba(255,255,255,0.88);
+  padding: 15px;
+  font-size: 12px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+  opacity: 0;
+  transition: 0.2s;
+
+  z-index: 100; /* ←これ追加！！ */
+}
+
+/* 初期状態をもっと小さく */
+.log {
+  transform: translate(-50%, -50%) scale(0.6);
+}
+
+/* 表示時アニメ強化 */
+.log.show {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  animation: popup 0.25s ease;
+}
+
+/* アニメーション */
+@keyframes popup {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* 表示時 */
+.log.show {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* メイン */
+.container {
+  position: relative;
+  width: 320px;
+  padding: 15px;
+  border-radius: 16px;
+  border: 1px solid #7fbce0;
+  text-align: center;
+
+  background: linear-gradient(120deg, #e6f7ff, #cfeeff, #f0fbff);
+  background-size: 200% 200%;
+  animation: glow 10s ease infinite;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+@keyframes glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.character {
+  width: 260px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+}
+
+/* 吹き出し */
+.speech {
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  padding: 12px;
+
+  border-radius: 12px;
+  border: 1px solid #7fbce0;
+  background: rgba(255,255,255,0.95);
+
+  font-size: 14px;
+  text-align: left;
+  min-height: 45px;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* ←これは外に出す！！ */
+.speech::after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  bottom: 5px;
+  font-size: 12px;
+  color: #7fbce0;
+}
+
+.blur {
+  filter: blur(5px);
+}
+
+/* 暗くなる、ぼける */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+
+  z-index: 50;
+}
+
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="overlay" class="overlay"></div>
+
+<div class="menu">
+  <button onclick="toggleLog()">セリフ一覧</button>
+</div>
+
+<div id="log" class="log">
+  <button onclick="toggleLog()">閉じる</button>
+  <div id="logContent"></div>
+</div>
+
+<div class="container" onclick="speak()">
+  <img id="img" src="fubuki.png" class="character">
+  <div id="speech" class="speech">（クリックしてね）</div>
+</div>
+
+<script>
+
+// ===== セリフ =====
+
+const normalLines = [
+"今日は静かね",
+"市場のほうが盛り上がってるようね。ちょっと見に行ってみようかしら",
+"この仕事が終わったらお茶にしましょうか",
+"そういえばあの書類、そろそろ取りかからないと",
+"甘いもの食べたい…",
+"ツゲ、どこ行ってたの？"
+];
+
+const timeLines = {
+morning: [
+"おはよう、今日もいい朝ね",
+"太陽の光を浴びると目が覚めるらしいわね　　…ここは日光が届かないけど…",
+"忘れ物はない？",
+"遅刻しないようにね",
+"ツゲ起きて、朝ごはんよ"
+],
+noon1: [
+"さて、今日も仕事しますか",
+"坑道の見回りに行ってこようかな",
+"ちょっとお腹が空いてきたわね…",
+"今日片づける仕事はこれとあれと……",
+"書類、誰か代わりに読んでくれないかしら"
+],
+noon2: [
+"ちょっと眠いわね…",
+"今日のおやつは何にしようかしら",
+"午後もわりと仕事あるわね…",
+"ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
+"(ペンを持つと絵が描きたくなる…)"
+],
+evening: [
+"今日の夜ご飯は何にしようかしら",
+"これ、今日中に終わるのかな…",
+"不意に屋台の食べ物が食べたくなってきたわ",
+"そろそろ坑道を見に行かないと",
+"(夜ご飯、ルイベじゃないといいな…)"
+],
+night: [
+"今日も一日、お疲れ様",
+"夜ご飯おいしかったわ、どこの具材使ってたんだろう",
+"食後のデザートってずっと食べたくなるわよね",
+"私はそろそろ寝るわ。おやすみなさい",
+"(明日はあれやらないと…)"
+],
+midnight: [
+"すやすや…(日常の夢を見ているようだ)",
+"むにゃ…(仕事の夢を見ているようだ)",
+"………(ぐっすり眠っているようだ)",
+"…こんな時間に何をしてるの？",
+"早く寝なさい、身体に障るわよ"
+]
+};
+
+const rareLines = {
+normal: [
+"炎の魔力と轟音……　またやったわねマッヒー…",
+"もう少し暇だったらバネッサまで遊びに行くんだけど",
+"…みんな何してるかなぁ",
+"カップラーメン食べたいなぁ",
+"護王様ってあの身体でどうやって仕事してるんだろ"
+],
+midnight: [
+"ふふふ……(いつかの旅の夢を見ているようだ)",
+"うぐ…うーん……(いつかの戦いの夢を見ているようだ)",
+"ぼくらだけの…せかい……(いつかの居場所の夢を見ているようだ)",
+"たんい…ほしい……(いつかの学び舎の夢を見ているようだ)",
+"まだ起きてるの？　…仕方ないわね、ちょっと弾いてあげるから早く寝なさいよ。何がいい？"
+]
+};
+
+const eventLines = {
+"1-1": ["あけましておめでとう。今年も良い一年にしましょうね"],
+"1-12": ["今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…"],
+"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ"],
+"5-17": ["今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…"],
+"8-5": ["…今日はあの場所の……何周年なんだ…？"],
+"10-31": ["トリックオアトリート！　冗談よ、お菓子いる？"],
+"12-25": ["今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…"],
+"12-31": ["今日は大晦日ね、充実した一年だった？　来年もよろしくね"]
+};
+
+// ===== 図鑑 =====
+
+let seen = JSON.parse(localStorage.getItem("seen") || "[]");
+
+function saveSeen(text){
+  if(!seen.includes(text)){
+    seen.push(text);
+    localStorage.setItem("seen", JSON.stringify(seen));
+  }
+}
+
+function toggleLog(){
+  const log = document.getElementById("log");
+  const overlay = document.getElementById("overlay");
+
+  if(log.classList.contains("show")){
+    log.classList.remove("show");
+    overlay.classList.remove("show");
+  } else {
+    log.classList.add("show");
+    overlay.classList.add("show");
+    renderLog();
+  }
+}
+
+function renderLog(){
+  const log = document.getElementById("logContent"); // ←変更
+  log.innerHTML = "";
+
+  const sections = [
+    ["通常", normalLines],
+    ["朝", timeLines.morning],
+    ["昼1", timeLines.noon1],
+    ["昼2", timeLines.noon2],
+    ["夕方", timeLines.evening],
+    ["夜", timeLines.night],
+    ["深夜", timeLines.midnight],
+    ["季節", Object.values(eventLines).flat()],
+    ["レア", [...rareLines.normal, ...rareLines.midnight]]
+  ];
+
+  sections.forEach(([name, arr])=>{
+    log.innerHTML += "<b>"+name+"</b><br>";
+    arr.forEach(t=>{
+      log.innerHTML += seen.includes(t) ? t : "？？？";
+      log.innerHTML += "<br>";
+    });
+    log.innerHTML += "<br>";
+  });
+}
+
+// ===== ロジック =====
+
+function getZone(hour){
+  if(hour>=5 && hour<9) return "morning";
+  if(hour<12) return "noon1";
+  if(hour<16) return "noon2";
+  if(hour<18) return "evening";
+  if(hour<21) return "night";
+  return "midnight";
+}
+
+function pick(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function speak(){
+
+  const now = new Date();
+  const hour = now.getHours();
+  const zone = getZone(hour);
+  const key = (now.getMonth()+1)+"-"+now.getDate();
+
+  let line;
+  let isRare = false;
+
+  // イベント
+  if(eventLines[key] && Math.random()<0.3){
+    line = pick(eventLines[key]);
+    showLine(line, false);
+    return;
+  }
+
+  // レア
+  if(Math.random()<0.01){
+    line = (zone==="midnight") ? pick(rareLines.midnight) : pick(rareLines.normal);
+    isRare = true;
+    showLine(line, isRare);
+    return;
+  }
+
+  // 深夜
+  if(zone==="midnight"){
+    line = pick(timeLines.midnight);
+  } else {
+    if(Math.random()<0.6){
+      line = pick(timeLines[zone]);
+    } else {
+      line = pick(normalLines);
+    }
+  }
+
+  showLine(line, isRare);
+}
+
+// ===== 表示 =====
+
+let typing = false;
+
+function showLine(text, isRare){
+
+  saveSeen(text);
+
+  const el = document.getElementById("speech");
+
+  el.style.color = isRare ? "#2a6fff" : "black";
+
+  typeText(text);
+
+  // 表情差分（例）
+  if(text.includes("すやすや") || text.includes("むにゃ")){
+    document.getElementById("img").src = "fubuki_sleep.png";
+  } else {
+    document.getElementById("img").src = "fubuki.png";
+  }
+}
+
+function typeText(text){
+  if(typing) return;
+  typing = true;
+
+  const el = document.getElementById("speech");
+  el.textContent = "";
+
+  let i = 0;
+
+  function step(){
+    if(i < text.length){
+      el.textContent += text[i];
+      i++;
+      setTimeout(step, 25);
+    } else {
+      typing = false;
+    }
+  }
+
+  step();
+}
+
+// 外クリックで閉じる
+document.getElementById("overlay").addEventListener("click", () => {
+  toggleLog();
+});
+
+</script>
+
+</body>
+</html>
