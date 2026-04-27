@@ -489,6 +489,12 @@ function renderLog() {
   const log = document.getElementById("logContent");
   log.innerHTML = "";
 
+  // すべてのアチーブメント報酬のリストを抽出しておく
+  const allRewards = [];
+  for (let key in achievements) {
+    allRewards.push(achievements[key].reward);
+  }
+
   const sections = [
     ["通常", normalLines],
     ["朝", timeLines.morning],
@@ -505,6 +511,11 @@ function renderLog() {
   sections.forEach(([name, arr]) => {
     log.innerHTML += `<b>${name}</b><br>`;
     arr.forEach(text => {
+      // 「アチーブメント」カテゴリ以外で、アチーブメントのセリフが含まれていたら表示をスキップする
+      if (name !== "アチーブメント" && allRewards.includes(text)) {
+        return; 
+      }
+      
       log.innerHTML += seen.includes(text) ? text : "？？？";
       log.innerHTML += "<br>";
     });
