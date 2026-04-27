@@ -186,6 +186,8 @@ body {
   transition: 0.2s;
 
   z-index: 50;
+  
+  display: none; /* ←これ追加 */
 }
 
 .overlay.show {
@@ -458,17 +460,18 @@ function saveSeen(text){
   }
 }
 
-function toggleLog(){
+function toggleLog() {
   const log = document.getElementById("log");
   const overlay = document.getElementById("overlay");
 
-  if(log.classList.contains("show")){
-    log.classList.remove("show");
-    overlay.classList.remove("show");
+  const isOpen = log.style.display === "block";
+
+  if (isOpen) {
+    log.style.display = "none";
+    overlay.style.display = "none";
   } else {
-    log.classList.add("show");
-    overlay.classList.add("show");
-    renderLog();
+    log.style.display = "block";
+    overlay.style.display = "block";
   }
 }
 
@@ -633,9 +636,9 @@ function checkAchievements() {
 }
   
 // 外クリックで閉じる
-document.getElementById("overlay").addEventListener("click", () => {
+document.getElementById("overlay").onclick = function() {
   toggleLog();
-});
+};
 
 </script>
 
