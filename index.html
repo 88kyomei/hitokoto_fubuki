@@ -427,8 +427,22 @@ const achievements = {
 
 };
 
+const allDialogueLines = [
+  ...normalLines,
+  ...timeLines.morning,
+  ...timeLines.noon1,
+  ...timeLines.noon2,
+  ...timeLines.evening,
+  ...timeLines.night,
+  ...timeLines.midnight,
+  ...Object.values(eventLines).flat(),
+  ...rareLines.normal,
+  ...rareLines.midnight,
+  ...achievementLines
+];
+
 achievements.all = {
-  lines: Object.values(linesByCategory).flat(),
+  lines: allDialogueLines,
   reward: "いらっしゃい、今日はどうしたの？",
   unlocked: false
 };
@@ -458,27 +472,34 @@ function toggleLog(){
   }
 }
 
-function renderLog(){
-  const log = document.getElementById("logContent"); // ←変更
+function renderLog() {
+  const log = document.getElementById("logContent");
   log.innerHTML = "";
 
   const sections = [
-  ["通常", normalLines],
-  ["朝", timeLines.morning],
-  ["昼1", timeLines.noon1],
-  ["昼2", timeLines.noon2],
-  ["夕方", timeLines.evening],
-  ["夜", timeLines.night],
-  ["深夜", timeLines.midnight],
+    ["通常", normalLines],
+    ["朝", timeLines.morning],
+    ["昼1", timeLines.noon1],
+    ["昼2", timeLines.noon2],
+    ["夕方", timeLines.evening],
+    ["夜", timeLines.night],
+    ["深夜", timeLines.midnight],
+    ["季節", Object.values(eventLines).flat()],
+    ["レア", [...rareLines.normal, ...rareLines.midnight]],
+    ["アチーブメント", achievementLines]
+  ];
 
-  ["季節", eventLines], // ←後で処理変える
-
-  ["レア", rareLines], // ←ここ超重要
-
-  ["アチーブメント", achievementLines]
-];
-
-  let allLines = [];
+  sections.forEach(([name, arr]) => {
+    log.innerHTML += `<b>${name}</b><br>`;
+    arr.forEach(text => {
+      log.innerHTML += seen.includes(text) ? text : "？？？";
+      log.innerHTML += "<br>";
+    });
+    log.innerHTML += "<br>";
+  });
+}
+  
+let allLines = [];
 
 if (Array.isArray(lines)) {
   allLines = lines;
@@ -567,8 +588,8 @@ function showLine(text, isRare){
   }
 }
 
-function typeText(text){
-  if(typing) return;
+function typeText(text) {
+  if (typing) return;
   typing = true;
 
   const el = document.getElementById("speech");
@@ -576,13 +597,16 @@ function typeText(text){
 
   let i = 0;
 
-  function step(){
-    if(i < text.length){
+  function step() {
+    if (i < text.length) {
       el.textContent += text[i];
       i++;
       setTimeout(step, 25);
     } else {
       typing = false;
+
+      // ←ここが超重要（アチーブメント発火）
+      checkAchievements();
     }
   }
 
@@ -593,32 +617,17 @@ function typeText(text){
 function checkAchievements() {
   for (let key in achievements) {
     const ach = achievements[key];
-
     if (ach.unlocked) continue;
 
-    const allSeen = ach.lines.every(line => seenLines.includes(line));
+    const allSeen = ach.lines.every(line => seen.includes(line));
 
     if (allSeen) {
       ach.unlocked = true;
+      showLine("✨ " + ach.reward, true);
 
-      // 解放演出
-      showLine("✨ " + ach.reward, false, true);
-
-      // 元カテゴリに追加
-      if (timeLines[key]) {
-        timeLines[key].push(ach.reward);
+      if (!achievementLines.includes(ach.reward)) {
+        achievementLines.push(ach.reward);
       }
-
-      if (timeLines[key]) {
-        timeLines[key].push(ach.reward);
-      }
-
-      if (rareLines.normal && key === "rare") {
-        rareLines.normal.push(ach.reward);
-      }
-
-      // アチーブメント一覧に追加
-      achievementLines.push(ach.reward);
     }
   }
 }
