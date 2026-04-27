@@ -61,15 +61,13 @@ body {
   opacity: 0;
   transition: 0.2s;
 
-  z-index: 100; /* ←これ追加！！ */
+  z-index: 100;
 }
 
-/* 初期状態をもっと小さく */
 .log {
   transform: translate(-50%, -50%) scale(0.6);
 }
 
-/* 表示時アニメ強化 */
 .log.show {
   display: block;
   opacity: 1;
@@ -77,7 +75,6 @@ body {
   animation: popup 0.25s ease;
 }
 
-/* アニメーション */
 @keyframes popup {
   0% {
     transform: translate(-50%, -50%) scale(0.3);
@@ -90,13 +87,6 @@ body {
   100% {
     transform: translate(-50%, -50%) scale(1);
   }
-}
-
-/* 表示時 */
-.log.show {
-  display: block;
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
 }
 
 /* メイン */
@@ -156,7 +146,6 @@ body {
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* ←これは外に出す！！ */
 .speech::after {
   content: "▼";
   position: absolute;
@@ -187,7 +176,7 @@ body {
 
   z-index: 50;
   
-  display: none; /* ←これ追加 */
+  display: none;
 }
 
 .overlay.show {
@@ -214,6 +203,97 @@ body {
   transform: scale(1.2);
 }
 
+/* デバッグ用UI */
+.debug-toggle-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  font-size: 12px;
+  color: #7fbce0;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2a6fff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.debug-menu {
+  position: fixed;
+  bottom: 50px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #7fbce0;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.debug-menu select {
+  padding: 4px;
+  border: 1px solid #7fbce0;
+  border-radius: 4px;
+  color: #333;
+}
+
+.debug-menu button {
+  padding: 4px 8px;
+  border: 1px solid #ff7b7b;
+  background: #fff0f0;
+  color: #d93030;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.debug-menu button:hover {
+  background: #ffd6d6;
+}
 </style>
 </head>
 
@@ -225,23 +305,53 @@ body {
   <button onclick="toggleLog()">セリフ一覧</button>
 </div>
 
+<div class="debug-toggle-container">
+  <span>デバッグモード</span>
+  <label class="switch">
+    <input type="checkbox" id="debugToggle" onchange="handleDebugToggle(this)">
+    <span class="slider"></span>
+  </label>
+</div>
+
+<div class="debug-menu" id="debugMenu" style="display: none;">
+  <label style="font-size: 12px; color: #2a6fff;">セリフ指定:</label>
+  <select id="debugCondition">
+    <option value="all">全ランダム</option>
+    <option value="morning">朝</option>
+    <option value="noon1">昼1</option>
+    <option value="noon2">昼2</option>
+    <option value="evening">夕方</option>
+    <option value="night">夜</option>
+    <option value="midnight">深夜</option>
+    <option value="seasonal">季節</option>
+    <option value="rare_normal">レア(通常)</option>
+    <option value="rare_midnight">レア(深夜)</option>
+  </select>
+  <button onclick="resetNormalHistory()" style="margin-top: 8px;">通常履歴リセット</button>
+</div>
+
 <div id="log" class="log">
   <button class="closeBtn" onclick="toggleLog()">×</button>
   <div id="logContent"></div>
 </div>
 
+<div id="passwordModal" class="log">
+  <button class="closeBtn" onclick="closePasswordModal()">×</button>
+  <div style="text-align: center; margin-top: 20px;">
+    パスワードを入力してください<br>
+    <input type="password" id="debugPassword" style="margin: 15px 0; padding: 5px; width: 80%; border: 1px solid #7fbce0; border-radius: 4px;"><br>
+    <button onclick="checkPassword()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">認証</button>
+  </div>
+</div>
+
 <div class="container" onclick="speak()">
-
-  <div class="title">ひとことフブキ</div> <!-- ←追加 -->
-
+  <div class="title">ひとことフブキ</div>
   <img id="img" src="fubuki.png" class="character">
   <div id="speech" class="speech">（クリックしてね）</div>
 </div>
 
 <script>
-
 // ===== セリフ =====
-
 const normalLines = [
 "今日は静かね",
 "市場のほうが盛り上がってるようね。ちょっと見に行ってみようかしら",
@@ -327,106 +437,46 @@ const eventLines = {
 const achievementLines = [];
   
 const achievements = {
-
   morning: {
-    lines: [
-      "おはよう、今日もいい朝ね",
-      "太陽の光を浴びると目が覚めるらしいわね　　…ここは日光が届かないけど…",
-      "忘れ物はない？",
-      "遅刻しないようにね",
-      "ツゲ起きて、朝ごはんよ"
-    ],
+    lines: [...timeLines.morning],
     reward: "ふわぁ……まだ少し眠いわね",
     unlocked: false
   },
-
   noon1: {
-    lines: [
-      "さて、今日も仕事しますか",
-      "坑道の見回りに行ってこようかな",
-      "ちょっとお腹が空いてきたわね…",
-      "今日片づける仕事はこれとあれと……",
-      "書類、誰か代わりに読んでくれないかしら"
-    ],
+    lines: [...timeLines.noon1],
     reward: "私と喋ってないで、やることやりなさいよ",
     unlocked: false
   },
-
   noon2: {
-    lines: [
-      "ちょっと眠いわね…",
-      "今日のおやつは何にしようかしら",
-      "午後もわりと仕事あるわね…",
-      "ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
-      "(ペンを持つと絵が描きたくなる…)"
-    ],
+    lines: [...timeLines.noon2],
     reward: "そろそろおやつにしましょうか。あなたも食べる？",
     unlocked: false
   },
-
   evening: {
-    lines: [
-      "今日の夜ご飯は何にしようかしら",
-      "これ、今日中に終わるのかな…",
-      "不意に屋台の食べ物が食べたくなってきたわ",
-      "そろそろ坑道を見に行かないと",
-      "(夜ご飯、ルイベじゃないといいな…)"
-    ],
+    lines: [...timeLines.evening],
     reward: "いい匂い…　これはカンボジアブロッコリー…？",
     unlocked: false
   },
-
   night: {
-    lines: [
-      "今日も一日、お疲れ様",
-      "夜ご飯おいしかったわ、どこの具材使ってたんだろう",
-      "食後のデザートってずっと食べたくなるわよね",
-      "私はそろそろ寝るわ。おやすみなさい",
-      "(明日はあれやらないと…)"
-    ],
+    lines: [...timeLines.night],
     reward: "21時就寝は早い？千年前の私に言ってちょうだい",
     unlocked: false
   },
-
   late: {
-    lines: [
-      "すやすや…(日常の夢を見ているようだ)",
-      "むにゃ…(仕事の夢を見ているようだ)",
-      "………(ぐっすり眠っているようだ)",
-      "…こんな時間に何をしてるの？",
-      "早く寝なさい、身体に障るわよ"
-    ],
+    lines: [...timeLines.midnight],
     reward: "すー…すー…(おいしいごはんの夢を見ているようだ)",
     unlocked: false
   },
-
   rare: {
-    lines: [
-      "炎の魔力と轟音……　またやったわねマッヒー…",
-      "もう少し暇だったらバネッサまで遊びに行くんだけど",
-      "…みんな何してるかなぁ",
-      "カップラーメン食べたいなぁ",
-      "護王様ってあの身体でどうやって仕事してるんだろ"
-    ],
+    lines: [...rareLines.normal],
     reward: "もっと私のことを知りたい？　…もう十分知ってるわよ",
     unlocked: false
   },
-
   seasonal: {
-    lines: [
-      "あけましておめでとう。今年も良い一年にしましょうね",
-      "今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…",
-      "今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ",
-      "今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…",
-      "…今日はあの場所の……何周年なんだ…？",
-      "トリックオアトリート！　冗談よ、お菓子いる？",
-      "今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…",
-      "今日は大晦日ね、充実した一年だった？　来年もよろしくね"
-    ],
+    lines: [...Object.values(eventLines).flat()],
     reward: "そういえば、あなたの誕生日っていつなの？",
     unlocked: false
   }
-
 };
 
 const allDialogueLines = [
@@ -448,24 +498,124 @@ achievements.all = {
   reward: "いらっしゃい、今日はどうしたの？",
   unlocked: false
 };
-  
-// ===== 図鑑 =====
 
-let seen = JSON.parse(localStorage.getItem("seen") || "[]");
+// ===== ロジック・状態管理 =====
+let typing = false;
+let pendingRewards = [];
+let isDebugMode = false;
+let debugSeen = [];
+const debugPassword = "fubuki_214_kisaragi"; // デバッグ用パスワード
 
-function saveSeen(text){
-  if(!seen.includes(text)){
-    seen.push(text);
-    localStorage.setItem("seen", JSON.stringify(seen));
+function addRewardToPool(key, reward) {
+  if (timeLines[key] && !timeLines[key].includes(reward)) {
+    timeLines[key].push(reward);
+  } else if (key === 'late' && !timeLines.midnight.includes(reward)) {
+    timeLines.midnight.push(reward);
+  } else {
+    if (!normalLines.includes(reward)) {
+      normalLines.push(reward);
+    }
   }
 }
 
+function initializeAchievements(targetSeen) {
+  achievementLines.length = 0;
+  for (let key in achievements) {
+    achievements[key].unlocked = false;
+  }
+
+  for (let key in achievements) {
+    const ach = achievements[key];
+    const allSeen = ach.lines.every(line => targetSeen.includes(line));
+
+    if (allSeen) {
+      ach.unlocked = true;
+      if (!achievementLines.includes(ach.reward)) {
+        achievementLines.push(ach.reward);
+      }
+      addRewardToPool(key, ach.reward);
+    }
+  }
+}
+
+let seen = JSON.parse(localStorage.getItem("seen") || "[]");
+initializeAchievements(seen);
+
+// デバッグ機能
+function handleDebugToggle(checkbox) {
+  if (checkbox.checked) {
+    checkbox.checked = false; 
+    document.getElementById("overlay").style.display = "block";
+    setTimeout(() => document.getElementById("overlay").classList.add("show"), 10);
+    const modal = document.getElementById("passwordModal");
+    modal.style.display = "block";
+    setTimeout(() => modal.classList.add("show"), 10);
+  } else {
+    isDebugMode = false;
+    debugSeen = [];
+    document.getElementById("debugMenu").style.display = "none";
+    alert("デバッグモードを終了しました。履歴は通常モードに戻ります。");
+    initializeAchievements(seen);
+  }
+}
+
+function closePasswordModal() {
+  const modal = document.getElementById("passwordModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+function checkPassword() {
+  const input = document.getElementById("debugPassword").value;
+  if (input === debugPassword) {
+    isDebugMode = true;
+    debugSeen = []; 
+    initializeAchievements(debugSeen);
+
+    document.getElementById("debugToggle").checked = true;
+    document.getElementById("debugPassword").value = "";
+    document.getElementById("debugMenu").style.display = "flex";
+    closePasswordModal();
+    alert("デバッグモードを開始しました。");
+  } else {
+    alert("パスワードが違います。");
+  }
+}
+
+function resetNormalHistory() {
+  if (confirm("通常モードの履歴を完全に削除します。よろしいですか？")) {
+    localStorage.removeItem("seen");
+    seen = [];
+    if (!isDebugMode) {
+      initializeAchievements(seen);
+    }
+    alert("通常モードの履歴をリセットしました。");
+  }
+}
+
+function saveSeen(text){
+  if (isDebugMode) {
+    if(!debugSeen.includes(text)){
+      debugSeen.push(text);
+    }
+  } else {
+    if(!seen.includes(text)){
+      seen.push(text);
+      localStorage.setItem("seen", JSON.stringify(seen));
+    }
+  }
+}
+
+// ===== 図鑑 =====
 function toggleLog() {
   const log = document.getElementById("log");
   const overlay = document.getElementById("overlay");
 
   if (log.classList.contains("show")) {
-    // 閉じる処理
     log.classList.remove("show");
     overlay.classList.remove("show");
     setTimeout(() => {
@@ -473,11 +623,9 @@ function toggleLog() {
       overlay.style.display = "none";
     }, 200);
   } else {
-    // 開く処理
     renderLog();
     log.style.display = "block";
     overlay.style.display = "block";
-    // 画面に配置した直後にアニメーションさせるための少しの遅延
     setTimeout(() => {
       log.classList.add("show");
       overlay.classList.add("show");
@@ -488,8 +636,8 @@ function toggleLog() {
 function renderLog() {
   const log = document.getElementById("logContent");
   log.innerHTML = "";
+  const currentSeen = isDebugMode ? debugSeen : seen;
 
-  // すべてのアチーブメント報酬のリストを抽出しておく
   const allRewards = [];
   for (let key in achievements) {
     allRewards.push(achievements[key].reward);
@@ -511,51 +659,17 @@ function renderLog() {
   sections.forEach(([name, arr]) => {
     log.innerHTML += `<b>${name}</b><br>`;
     arr.forEach(text => {
-      // 「アチーブメント」カテゴリ以外で、アチーブメントのセリフが含まれていたら表示をスキップする
       if (name !== "アチーブメント" && allRewards.includes(text)) {
         return; 
       }
-      
-      log.innerHTML += seen.includes(text) ? text : "？？？";
+      log.innerHTML += currentSeen.includes(text) ? text : "？？？";
       log.innerHTML += "<br>";
     });
     log.innerHTML += "<br>";
   });
 }
-  
-// ===== ロジック =====
 
-// ===== アチーブメント初期化とセリフ追加 =====
-
-// アチーブメント報酬を通常のセリフ候補に混ぜる関数
-function addRewardToPool(key, reward) {
-  if (timeLines[key] && !timeLines[key].includes(reward)) {
-    timeLines[key].push(reward);
-  } else if (key === 'late' && !timeLines.midnight.includes(reward)) {
-    timeLines.midnight.push(reward);
-  } else {
-    // レアや季節などは通常セリフに混ぜる
-    if (!normalLines.includes(reward)) {
-      normalLines.push(reward);
-    }
-  }
-}
-
-// ページ読み込み時に、すでに達成済みのものをチェックしてプールに追加
-for (let key in achievements) {
-  const ach = achievements[key];
-  const allSeen = ach.lines.every(line => seen.includes(line));
-
-  if (allSeen) {
-    ach.unlocked = true;
-    if (!achievementLines.includes(ach.reward)) {
-      achievementLines.push(ach.reward);
-    }
-    addRewardToPool(key, ach.reward);
-  }
-}
-
-  
+// ===== キャラクターの処理 =====
 function getZone(hour){
   if(hour>=5 && hour<9) return "morning";
   if(hour<12) return "noon1";
@@ -570,11 +684,56 @@ function pick(arr){
 }
 
 function speak(){
-
-  // 順番待ちのアチーブメントセリフがあれば、それを優先して表示して終了します
   if (pendingRewards.length > 0) {
-    const rewardLine = pendingRewards.shift(); // 先頭を取り出します
+    const rewardLine = pendingRewards.shift();
     showLine(rewardLine, true);
+    return;
+  }
+
+  let line;
+  let isRare = false;
+
+  if (isDebugMode) {
+    const condition = document.getElementById("debugCondition").value;
+    let pool = [];
+
+    switch (condition) {
+      case "all":
+        pool = [
+          ...normalLines,
+          ...Object.values(timeLines).flat(),
+          ...Object.values(eventLines).flat(),
+          ...rareLines.normal,
+          ...rareLines.midnight
+        ];
+        line = pick(pool);
+        isRare = rareLines.normal.includes(line) || rareLines.midnight.includes(line);
+        break;
+      case "morning":
+      case "noon1":
+      case "noon2":
+      case "evening":
+      case "night":
+      case "midnight":
+        pool = timeLines[condition];
+        line = pick(pool);
+        break;
+      case "seasonal":
+        pool = Object.values(eventLines).flat();
+        line = pick(pool);
+        break;
+      case "rare_normal":
+        pool = rareLines.normal;
+        line = pick(pool);
+        isRare = true;
+        break;
+      case "rare_midnight":
+        pool = rareLines.midnight;
+        line = pick(pool);
+        isRare = true;
+        break;
+    }
+    showLine(line, isRare);
     return;
   }
 
@@ -583,17 +742,12 @@ function speak(){
   const zone = getZone(hour);
   const key = (now.getMonth()+1)+"-"+now.getDate();
 
-  let line;
-  let isRare = false;
-  
-  // イベント
   if(eventLines[key] && Math.random()<0.3){
     line = pick(eventLines[key]);
     showLine(line, false);
     return;
   }
 
-  // レア
   if(Math.random()<0.01){
     line = (zone==="midnight") ? pick(rareLines.midnight) : pick(rareLines.normal);
     isRare = true;
@@ -601,7 +755,6 @@ function speak(){
     return;
   }
 
-  // 深夜
   if(zone==="midnight"){
     line = pick(timeLines.midnight);
   } else {
@@ -615,21 +768,12 @@ function speak(){
   showLine(line, isRare);
 }
 
-// ===== 表示 =====
-
-let typing = false;
-
 function showLine(text, isRare){
-
   saveSeen(text);
-
   const el = document.getElementById("speech");
-
   el.style.color = isRare ? "#2a6fff" : "black";
-
   typeText(text);
 
-  // 表情差分（例）
   if(text.includes("すやすや") || text.includes("むにゃ")){
     document.getElementById("img").src = "fubuki.png";
   } else {
@@ -637,8 +781,6 @@ function showLine(text, isRare){
   }
 }
 
-let pendingRewards = []; // ここを追加します
-  
 function typeText(text) {
   if (typing) return;
   typing = true;
@@ -647,7 +789,6 @@ function typeText(text) {
   el.textContent = "";
 
   let i = 0;
-
   function step() {
     if (i < text.length) {
       el.textContent += text[i];
@@ -655,44 +796,42 @@ function typeText(text) {
       setTimeout(step, 25);
     } else {
       typing = false;
-
-      // ←ここが超重要（アチーブメント発火）
       checkAchievements();
     }
   }
-
   step();
 }
 
-// アチーブメントが出た時
 function checkAchievements() {
+  const currentSeen = isDebugMode ? debugSeen : seen;
+
   for (let key in achievements) {
     const ach = achievements[key];
     if (ach.unlocked) continue;
 
-    const allSeen = ach.lines.every(line => seen.includes(line));
+    const allSeen = ach.lines.every(line => currentSeen.includes(line));
 
     if (allSeen) {
       ach.unlocked = true;
-      
-      // すぐに表示せず、順番待ちのリストに入れます
       pendingRewards.push("✨ " + ach.reward);
 
       if (!achievementLines.includes(ach.reward)) {
         achievementLines.push(ach.reward);
       }
-
-      // 新しくコンプリートしたセリフを、次から通常の候補に入れる
       addRewardToPool(key, ach.reward);
     }
   }
 }
-  
-// 外クリックで閉じる
-document.getElementById("overlay").onclick = function() {
-  toggleLog();
-};
 
+document.getElementById("overlay").onclick = function(e) {
+  if (e.target.id === "overlay") {
+    if (document.getElementById("passwordModal").classList.contains("show")) {
+      closePasswordModal();
+    } else {
+      toggleLog();
+    }
+  }
+};
 </script>
 
 </body>
