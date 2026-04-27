@@ -470,6 +470,7 @@ function toggleLog() {
     log.style.display = "none";
     overlay.style.display = "none";
   } else {
+    renderLog(); // ← この1行を追加します
     log.style.display = "block";
     overlay.style.display = "block";
   }
@@ -502,19 +503,6 @@ function renderLog() {
   });
 }
   
-let allLines = [];
-
-if (Array.isArray(lines)) {
-  allLines = lines;
-} else {
-  allLines = Object.values(lines).flat();
-}
-
-allLines.forEach(line => {
-  const seen = seenLines.includes(line);
-  // 表示処理
-});
-
 // ===== ロジック =====
 
 function getZone(hour){
