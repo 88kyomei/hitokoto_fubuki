@@ -518,7 +518,24 @@ function addRewardToPool(key, reward) {
   }
 }
 
+function removeAllRewardsFromPools() {
+  const allRewards = [];
+  for (let k in achievements) {
+    allRewards.push(achievements[k].reward);
+  }
+  for (let i = normalLines.length - 1; i >= 0; i--) {
+    if (allRewards.includes(normalLines[i])) normalLines.splice(i, 1);
+  }
+  for (let tKey in timeLines) {
+    for (let i = timeLines[tKey].length - 1; i >= 0; i--) {
+      if (allRewards.includes(timeLines[tKey][i])) timeLines[tKey].splice(i, 1);
+    }
+  }
+}
+
 function initializeAchievements(targetSeen) {
+  removeAllRewardsFromPools(); // 掃除を実行
+
   achievementLines.length = 0;
   for (let key in achievements) {
     achievements[key].unlocked = false;
@@ -598,13 +615,14 @@ function resetNormalHistory() {
 }
 
 function saveSeen(text){
+  const cleanText = text.replace("✨ ", "");
   if (isDebugMode) {
-    if(!debugSeen.includes(text)){
-      debugSeen.push(text);
+    if(!debugSeen.includes(cleanText)){
+      debugSeen.push(cleanText);
     }
   } else {
-    if(!seen.includes(text)){
-      seen.push(text);
+    if(!seen.includes(cleanText)){
+      seen.push(cleanText);
       localStorage.setItem("seen", JSON.stringify(seen));
     }
   }
@@ -719,16 +737,18 @@ function speak(){
         line = pick(pool);
         break;
       case "seasonal":
-        pool = Object.values(eventLines).flat();
+        pool = [...Object.values(eventLines).flat()];
+        if (achievements.seasonal.unlocked) pool.push(achievements.seasonal.reward);
         line = pick(pool);
         break;
       case "rare_normal":
-        pool = rareLines.normal;
+        pool = [...rareLines.normal];
+        if (achievements.rare.unlocked) pool.push(achievements.rare.reward);
         line = pick(pool);
         isRare = true;
         break;
       case "rare_midnight":
-        pool = rareLines.midnight;
+        pool = [...rareLines.midnight];
         line = pick(pool);
         isRare = true;
         break;
