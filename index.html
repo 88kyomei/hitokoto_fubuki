@@ -571,13 +571,17 @@ function pick(arr){
 
 function speak(){
 
+  // 順番待ちのアチーブメントセリフがあれば、それを優先して表示して終了します
+  if (pendingRewards.length > 0) {
+    const rewardLine = pendingRewards.shift(); // 先頭を取り出します
+    showLine(rewardLine, true);
+    return;
+  }
+
   const now = new Date();
   const hour = now.getHours();
   const zone = getZone(hour);
   const key = (now.getMonth()+1)+"-"+now.getDate();
-
-  let line;
-  let isRare = false;
 
   // イベント
   if(eventLines[key] && Math.random()<0.3){
@@ -630,6 +634,9 @@ function showLine(text, isRare){
   }
 }
 
+let typing = false;
+let pendingRewards = []; // ここを追加します
+  
 function typeText(text) {
   if (typing) return;
   typing = true;
@@ -665,7 +672,9 @@ function checkAchievements() {
 
     if (allSeen) {
       ach.unlocked = true;
-      showLine("✨ " + ach.reward, true);
+      
+      // すぐに表示せず、順番待ちのリストに入れます
+      pendingRewards.push("✨ " + ach.reward);
 
       if (!achievementLines.includes(ach.reward)) {
         achievementLines.push(ach.reward);
