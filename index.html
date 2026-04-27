@@ -583,6 +583,9 @@ function speak(){
   const zone = getZone(hour);
   const key = (now.getMonth()+1)+"-"+now.getDate();
 
+  let line;
+  let isRare = false;
+  
   // イベント
   if(eventLines[key] && Math.random()<0.3){
     line = pick(eventLines[key]);
@@ -634,7 +637,6 @@ function showLine(text, isRare){
   }
 }
 
-let typing = false;
 let pendingRewards = []; // ここを追加します
   
 function typeText(text) {
