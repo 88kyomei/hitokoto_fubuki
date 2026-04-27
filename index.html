@@ -464,15 +464,24 @@ function toggleLog() {
   const log = document.getElementById("log");
   const overlay = document.getElementById("overlay");
 
-  const isOpen = log.style.display === "block";
-
-  if (isOpen) {
-    log.style.display = "none";
-    overlay.style.display = "none";
+  if (log.classList.contains("show")) {
+    // 閉じる処理
+    log.classList.remove("show");
+    overlay.classList.remove("show");
+    setTimeout(() => {
+      log.style.display = "none";
+      overlay.style.display = "none";
+    }, 200);
   } else {
-    renderLog(); // ← この1行を追加します
+    // 開く処理
+    renderLog();
     log.style.display = "block";
     overlay.style.display = "block";
+    // 画面に配置した直後にアニメーションさせるための少しの遅延
+    setTimeout(() => {
+      log.classList.add("show");
+      overlay.classList.add("show");
+    }, 10);
   }
 }
 
@@ -505,6 +514,37 @@ function renderLog() {
   
 // ===== ロジック =====
 
+// ===== アチーブメント初期化とセリフ追加 =====
+
+// アチーブメント報酬を通常のセリフ候補に混ぜる関数
+function addRewardToPool(key, reward) {
+  if (timeLines[key] && !timeLines[key].includes(reward)) {
+    timeLines[key].push(reward);
+  } else if (key === 'late' && !timeLines.midnight.includes(reward)) {
+    timeLines.midnight.push(reward);
+  } else {
+    // レアや季節などは通常セリフに混ぜる
+    if (!normalLines.includes(reward)) {
+      normalLines.push(reward);
+    }
+  }
+}
+
+// ページ読み込み時に、すでに達成済みのものをチェックしてプールに追加
+for (let key in achievements) {
+  const ach = achievements[key];
+  const allSeen = ach.lines.every(line => seen.includes(line));
+
+  if (allSeen) {
+    ach.unlocked = true;
+    if (!achievementLines.includes(ach.reward)) {
+      achievementLines.push(ach.reward);
+    }
+    addRewardToPool(key, ach.reward);
+  }
+}
+
+  
 function getZone(hour){
   if(hour>=5 && hour<9) return "morning";
   if(hour<12) return "noon1";
@@ -619,6 +659,9 @@ function checkAchievements() {
       if (!achievementLines.includes(ach.reward)) {
         achievementLines.push(ach.reward);
       }
+
+      // 新しくコンプリートしたセリフを、次から通常の候補に入れる
+      addRewardToPool(key, ach.reward);
     }
   }
 }
