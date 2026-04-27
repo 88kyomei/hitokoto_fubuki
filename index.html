@@ -24,6 +24,8 @@ body {
   top: 20px;
   left: 20px;
   z-index: 10;
+  display: flex;
+  gap: 8px;
 }
 
 .menu button {
@@ -38,7 +40,7 @@ body {
   background: #dff4ff;
 }
 
-/* 図鑑 */
+/* モーダル共通 (図鑑・パスワード・誕生日) */
 .log {
   display: none;
   position: fixed;
@@ -64,10 +66,6 @@ body {
   z-index: 100;
 }
 
-.log {
-  transform: translate(-50%, -50%) scale(0.6);
-}
-
 .log.show {
   display: block;
   opacity: 1;
@@ -76,17 +74,9 @@ body {
 }
 
 @keyframes popup {
-  0% {
-    transform: translate(-50%, -50%) scale(0.3);
-    opacity: 0;
-  }
-  60% {
-    transform: translate(-50%, -50%) scale(1.05);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 /* メイン */
@@ -117,7 +107,6 @@ body {
   color: #2a6fff;
   margin-bottom: 8px;
   letter-spacing: 1px;
-
   text-shadow: 0 0 6px rgba(80,150,255,0.3);
 }
   
@@ -126,7 +115,6 @@ body {
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
 }
 
-/* 吹き出し */
 .speech {
   position: absolute;
   bottom: -35px;
@@ -142,7 +130,6 @@ body {
   font-size: 14px;
   text-align: left;
   min-height: 45px;
-
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
@@ -155,11 +142,6 @@ body {
   color: #7fbce0;
 }
 
-.blur {
-  filter: blur(5px);
-}
-
-/* 暗くなる、ぼける */
 .overlay {
   position: fixed;
   top: 0;
@@ -173,9 +155,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: 0.2s;
-
   z-index: 50;
-  
   display: none;
 }
 
@@ -188,13 +168,11 @@ body {
   position: absolute;
   top: 8px;
   right: 10px;
-
   background: none;
   border: none;
   font-size: 18px;
   color: #7fbce0;
   cursor: pointer;
-
   transition: 0.2s;
 }
 
@@ -253,13 +231,8 @@ body {
   border-radius: 50%;
 }
 
-input:checked + .slider {
-  background-color: #2a6fff;
-}
-
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
+input:checked + .slider { background-color: #2a6fff; }
+input:checked + .slider:before { transform: translateX(20px); }
 
 .debug-menu {
   position: fixed;
@@ -291,8 +264,14 @@ input:checked + .slider:before {
   cursor: pointer;
   font-size: 12px;
 }
-.debug-menu button:hover {
-  background: #ffd6d6;
+.debug-menu button:hover { background: #ffd6d6; }
+
+/* 誕生日入力用セレクトボックス */
+.bd-select {
+  padding: 4px;
+  border: 1px solid #7fbce0;
+  border-radius: 4px;
+  font-size: 14px;
 }
 </style>
 </head>
@@ -303,6 +282,7 @@ input:checked + .slider:before {
 
 <div class="menu">
   <button onclick="toggleLog()">セリフ一覧</button>
+  <button id="editBirthdayBtn" onclick="openBirthdayModal()" style="display: none;">誕生日設定</button>
 </div>
 
 <div class="debug-toggle-container">
@@ -341,6 +321,26 @@ input:checked + .slider:before {
     パスワードを入力してください<br>
     <input type="password" id="debugPassword" style="margin: 15px 0; padding: 5px; width: 80%; border: 1px solid #7fbce0; border-radius: 4px;"><br>
     <button onclick="checkPassword()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">認証</button>
+  </div>
+</div>
+
+<div id="birthdayModal" class="log">
+  <button class="closeBtn" onclick="closeBirthdayModal()">×</button>
+  <div style="text-align: center; margin-top: 20px; font-size: 14px;">
+    
+    <div id="bdInputArea">
+      あなたの誕生日は？<br><br>
+      <select id="bdMonth" class="bd-select" onchange="updateBirthdayDays()"></select> 月 
+      <select id="bdDay" class="bd-select"></select> 日<br><br>
+      <button onclick="confirmBirthday()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">確認</button>
+    </div>
+
+    <div id="bdConfirmArea" style="display: none;">
+      <span id="bdConfirmText" style="font-weight: bold; color: #2a6fff;"></span><br>でよろしいですか？<br><br>
+      <button onclick="saveBirthday()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">OK！</button>
+      <button onclick="cancelBirthday()" style="padding: 5px 15px; border: 1px solid #ff7b7b; background: #fff0f0; border-radius: 4px; cursor: pointer; margin-left: 10px;">やり直す</button>
+    </div>
+
   </div>
 </div>
 
@@ -479,22 +479,10 @@ const achievements = {
   }
 };
 
-const allDialogueLines = [
-  ...normalLines,
-  ...timeLines.morning,
-  ...timeLines.noon1,
-  ...timeLines.noon2,
-  ...timeLines.evening,
-  ...timeLines.night,
-  ...timeLines.midnight,
-  ...Object.values(eventLines).flat(),
-  ...rareLines.normal,
-  ...rareLines.midnight,
-  ...achievementLines
-];
+const playerBirthdayLine = "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ";
 
 achievements.all = {
-  lines: allDialogueLines,
+  lines: [], // 動的に後で詰めます
   reward: "いらっしゃい、今日はどうしたの？",
   unlocked: false
 };
@@ -504,7 +492,11 @@ let typing = false;
 let pendingRewards = [];
 let isDebugMode = false;
 let debugSeen = [];
-const debugPassword = "fubuki_214_kisaragi"; // デバッグ用パスワード
+const debugPassword = "fubuki"; 
+
+// 誕生日管理用変数
+let userBirthday = localStorage.getItem("userBirthday") || null;
+let waitingForBirthdayClick = false;
 
 function addRewardToPool(key, reward) {
   if (timeLines[key] && !timeLines[key].includes(reward)) {
@@ -534,9 +526,27 @@ function removeAllRewardsFromPools() {
 }
 
 function initializeAchievements(targetSeen) {
-  removeAllRewardsFromPools(); // 掃除を実行
-
+  removeAllRewardsFromPools();
   achievementLines.length = 0;
+  
+  // 誕生日セリフの事前登録（図鑑とイベントラインに反映）
+  if (userBirthday) {
+    if (!eventLines[userBirthday]) eventLines[userBirthday] = [];
+    if (!eventLines[userBirthday].includes(playerBirthdayLine)) {
+      eventLines[userBirthday].push(playerBirthdayLine);
+    }
+  }
+
+  // アチーブメント全種計算
+  const allDialogueLines = [
+    ...normalLines,
+    ...timeLines.morning, ...timeLines.noon1, ...timeLines.noon2,
+    ...timeLines.evening, ...timeLines.night, ...timeLines.midnight,
+    ...Object.values(eventLines).flat(),
+    ...rareLines.normal, ...rareLines.midnight
+  ];
+  achievements.all.lines = allDialogueLines;
+
   for (let key in achievements) {
     achievements[key].unlocked = false;
   }
@@ -553,12 +563,120 @@ function initializeAchievements(targetSeen) {
       addRewardToPool(key, ach.reward);
     }
   }
+
+  // 誕生日設定ボタンの表示制御
+  if (achievements.seasonal.unlocked) {
+    document.getElementById("editBirthdayBtn").style.display = "inline-block";
+  } else {
+    document.getElementById("editBirthdayBtn").style.display = "none";
+  }
 }
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
 initializeAchievements(seen);
 
-// デバッグ機能
+// ===== 誕生日モーダル関連 =====
+function initBirthdaySelects() {
+  const mSel = document.getElementById("bdMonth");
+  mSel.innerHTML = "";
+  for(let i=1; i<=12; i++) mSel.innerHTML += `<option value="${i}">${i}</option>`;
+  updateBirthdayDays();
+}
+
+function updateBirthdayDays() {
+  const m = parseInt(document.getElementById("bdMonth").value) || 1;
+  const dSel = document.getElementById("bdDay");
+  
+  // 2024年はうるう年なので、2月を指定したときに29日まで算出されます
+  const daysInMonth = new Date(2024, m, 0).getDate(); 
+  let currentDay = dSel.value;
+  
+  dSel.innerHTML = "";
+  for(let i=1; i<=daysInMonth; i++) dSel.innerHTML += `<option value="${i}">${i}</option>`;
+  
+  // 月を変えたときに、もし以前選んでいた日付が存在すれば復元する（例: 5月30日 -> 2月に変更 -> 2月29日になる）
+  if (currentDay && currentDay <= daysInMonth) {
+    dSel.value = currentDay;
+  }
+}
+
+function openBirthdayModal() {
+  initBirthdaySelects();
+  
+  // すでに設定済みならその日付をセットしておく
+  if (userBirthday) {
+    const [m, d] = userBirthday.split('-');
+    document.getElementById("bdMonth").value = m;
+    updateBirthdayDays();
+    document.getElementById("bdDay").value = d;
+  }
+
+  document.getElementById("bdInputArea").style.display = "block";
+  document.getElementById("bdConfirmArea").style.display = "none";
+  
+  const modal = document.getElementById("birthdayModal");
+  document.getElementById("overlay").style.display = "block";
+  modal.style.display = "block";
+  setTimeout(() => {
+    document.getElementById("overlay").classList.add("show");
+    modal.classList.add("show");
+  }, 10);
+}
+
+function closeBirthdayModal() {
+  const modal = document.getElementById("birthdayModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+function confirmBirthday() {
+  const m = document.getElementById("bdMonth").value;
+  const d = document.getElementById("bdDay").value;
+  document.getElementById("bdConfirmText").textContent = `${m}月${d}日`;
+  
+  document.getElementById("bdInputArea").style.display = "none";
+  document.getElementById("bdConfirmArea").style.display = "block";
+}
+
+function cancelBirthday() {
+  document.getElementById("bdConfirmArea").style.display = "none";
+  document.getElementById("bdInputArea").style.display = "block";
+}
+
+function saveBirthday() {
+  const m = document.getElementById("bdMonth").value;
+  const d = document.getElementById("bdDay").value;
+  const newBirthday = `${m}-${d}`;
+
+  // 古い誕生日のセリフを削除
+  if (userBirthday && eventLines[userBirthday]) {
+    eventLines[userBirthday] = eventLines[userBirthday].filter(line => line !== playerBirthdayLine);
+    if (eventLines[userBirthday].length === 0) delete eventLines[userBirthday];
+  }
+
+  // 新しい誕生日を保存
+  userBirthday = newBirthday;
+  localStorage.setItem("userBirthday", userBirthday);
+
+  if (!eventLines[userBirthday]) eventLines[userBirthday] = [];
+  if (!eventLines[userBirthday].includes(playerBirthdayLine)) {
+    eventLines[userBirthday].push(playerBirthdayLine);
+  }
+
+  closeBirthdayModal();
+  document.getElementById("editBirthdayBtn").style.display = "inline-block";
+  
+  // モーダルを閉じたあと、キャラクターの返事を表示
+  setTimeout(() => {
+    showLine(`${m}月${d}日ね。覚えておくわ`, true);
+  }, 300);
+}
+
+// ===== デバッグ機能 =====
 function handleDebugToggle(checkbox) {
   if (checkbox.checked) {
     checkbox.checked = false; 
@@ -661,6 +779,9 @@ function renderLog() {
     allRewards.push(achievements[key].reward);
   }
 
+  // 図鑑生成前にイベントラインの情報を最新にする
+  const eventLineValues = Object.values(eventLines).flat();
+
   const sections = [
     ["通常", normalLines],
     ["朝", timeLines.morning],
@@ -669,7 +790,7 @@ function renderLog() {
     ["夕方", timeLines.evening],
     ["夜", timeLines.night],
     ["深夜", timeLines.midnight],
-    ["季節", Object.values(eventLines).flat()],
+    ["季節", eventLineValues],
     ["レア", [...rareLines.normal, ...rareLines.midnight]],
     ["アチーブメント", achievementLines]
   ];
@@ -702,6 +823,13 @@ function pick(arr){
 }
 
 function speak(){
+  // 誕生日入力待ちフラグが立っている場合、クリックでモーダルを展開
+  if (waitingForBirthdayClick) {
+    waitingForBirthdayClick = false;
+    openBirthdayModal();
+    return;
+  }
+
   if (pendingRewards.length > 0) {
     const rewardLine = pendingRewards.shift();
     showLine(rewardLine, true);
@@ -733,17 +861,21 @@ function speak(){
       case "evening":
       case "night":
       case "midnight":
-        pool = timeLines[condition];
+        pool = [...timeLines[condition]];
         line = pick(pool);
         break;
       case "seasonal":
         pool = [...Object.values(eventLines).flat()];
-        if (achievements.seasonal.unlocked) pool.push(achievements.seasonal.reward);
+        if (achievements.seasonal.unlocked && !pool.includes(achievements.seasonal.reward)) {
+          pool.push(achievements.seasonal.reward);
+        }
         line = pick(pool);
         break;
       case "rare_normal":
         pool = [...rareLines.normal];
-        if (achievements.rare.unlocked) pool.push(achievements.rare.reward);
+        if (achievements.rare.unlocked && !pool.includes(achievements.rare.reward)) {
+          pool.push(achievements.rare.reward);
+        }
         line = pick(pool);
         isRare = true;
         break;
@@ -816,6 +948,13 @@ function typeText(text) {
       setTimeout(step, 25);
     } else {
       typing = false;
+      
+      // 季節アチーブメントが出たら、次のクリックを誕生日モーダルに向けるフラグを立てる
+      if (text.includes(achievements.seasonal.reward)) {
+        waitingForBirthdayClick = true;
+        document.getElementById("editBirthdayBtn").style.display = "inline-block";
+      }
+
       checkAchievements();
     }
   }
@@ -827,7 +966,7 @@ function checkAchievements() {
 
   for (let key in achievements) {
     const ach = achievements[key];
-    if (ach.unlocked) continue;
+    if (ach.unlocked || key === "all") continue;
 
     const allSeen = ach.lines.every(line => currentSeen.includes(line));
 
@@ -839,6 +978,25 @@ function checkAchievements() {
         achievementLines.push(ach.reward);
       }
       addRewardToPool(key, ach.reward);
+      
+      // 季節アチーブメントが解放されたらボタンを表示
+      if (key === "seasonal") {
+        document.getElementById("editBirthdayBtn").style.display = "inline-block";
+      }
+    }
+  }
+
+  // "all"アチーブメントの特別処理（すべてのセリフをコンプリートしたか）
+  if (!achievements.all.unlocked) {
+    const allLines = achievements.all.lines;
+    const allSeen = allLines.every(line => currentSeen.includes(line));
+    if (allSeen && allLines.length > 0) {
+      achievements.all.unlocked = true;
+      pendingRewards.push("✨ " + achievements.all.reward);
+      if (!achievementLines.includes(achievements.all.reward)) {
+        achievementLines.push(achievements.all.reward);
+      }
+      addRewardToPool("all", achievements.all.reward);
     }
   }
 }
@@ -847,6 +1005,8 @@ document.getElementById("overlay").onclick = function(e) {
   if (e.target.id === "overlay") {
     if (document.getElementById("passwordModal").classList.contains("show")) {
       closePasswordModal();
+    } else if (document.getElementById("birthdayModal").classList.contains("show")) {
+      closeBirthdayModal();
     } else {
       toggleLog();
     }
