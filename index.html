@@ -463,27 +463,33 @@ function renderLog(){
   log.innerHTML = "";
 
   const sections = [
-    ["通常", normalLines],
-    ["朝", timeLines.morning],
-    ["昼1", timeLines.noon1],
-    ["昼2", timeLines.noon2],
-    ["夕方", timeLines.evening],
-    ["夜", timeLines.night],
-    ["深夜", timeLines.midnight],
-    ["季節", Object.values(eventLines).flat()],
-    ["レア", [...rareLines.normal, ...rareLines.midnight]],
-    ["アチーブメント", achievementLines]
-  ];
+  ["通常", normalLines],
+  ["朝", timeLines.morning],
+  ["昼1", timeLines.noon1],
+  ["昼2", timeLines.noon2],
+  ["夕方", timeLines.evening],
+  ["夜", timeLines.night],
+  ["深夜", timeLines.midnight],
 
-  sections.forEach(([name, arr])=>{
-    log.innerHTML += "<b>"+name+"</b><br>";
-    arr.forEach(t=>{
-      log.innerHTML += seen.includes(t) ? t : "？？？";
-      log.innerHTML += "<br>";
-    });
-    log.innerHTML += "<br>";
-  });
+  ["季節", eventLines], // ←後で処理変える
+
+  ["レア", rareLines], // ←ここ超重要
+
+  ["アチーブメント", achievementLines]
+];
+
+  let allLines = [];
+
+if (Array.isArray(lines)) {
+  allLines = lines;
+} else {
+  allLines = Object.values(lines).flat();
 }
+
+allLines.forEach(line => {
+  const seen = seenLines.includes(line);
+  // 表示処理
+});
 
 // ===== ロジック =====
 
@@ -603,8 +609,12 @@ function checkAchievements() {
         timeLines[key].push(ach.reward);
       }
 
-      if (rareLines[key]) {
-        rareLines[key].push(ach.reward);
+      if (timeLines[key]) {
+        timeLines[key].push(ach.reward);
+      }
+
+      if (rareLines.normal && key === "rare") {
+        rareLines.normal.push(ach.reward);
       }
 
       // アチーブメント一覧に追加
