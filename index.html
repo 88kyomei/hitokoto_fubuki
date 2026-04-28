@@ -12,10 +12,14 @@ body {
   margin: 0;
   height: 100vh;
   display: flex;
+  /* 中央揃えから上寄せに変更し、上部にメニュー用の余白を確保 */
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 80px; 
+  box-sizing: border-box;
   background: #f5fbff;
   font-family: "Segoe UI", sans-serif;
+  overflow-x: hidden; /* 横揺れ防止 */
 }
 
 /* メニュー群 */
@@ -86,12 +90,12 @@ body {
   100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* アプリ全体のコンテナ（縦並びにしてリマインダーを下に追加するため） */
+/* アプリ全体のコンテナ */
 .app-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 60px; /* 吹き出し(-35px)が被らないように広めの余白を設定 */
   transition: 0.3s;
 }
 
@@ -699,33 +703,59 @@ function endRemDrag(e) {
 
   let dx = remCurX - remStartX;
   let dy = remCurY - remStartY;
-  remDisplay.style.transition = "transform 0.3s, opacity 0.3s";
-
+  
   if (remLongPressed) {
+    remDisplay.style.transition = "transform 0.3s ease, opacity 0.3s ease";
     if (dy > 50) {
       dismissCurrentReminder();
     } else {
       remDisplay.style.transform = "translate(0px, 0px)";
     }
   } else {
-    if (dx > 50) { // 右スワイプで次へ
+    if (dx > 50) { // 右スワイプ
       cycleReminder(1);
-    } else if (dx < -50) { // 左スワイプで前へ
+    } else if (dx < -50) { // 左スワイプ
       cycleReminder(-1);
     } else {
+      remDisplay.style.transition = "transform 0.3s ease";
       remDisplay.style.transform = "translate(0px, 0px)";
     }
   }
 }
 
+// スムーズな切り替えアニメーション
 function cycleReminder(dir) {
   if (activeReminders.length <= 1) {
+    remDisplay.style.transition = "transform 0.3s ease";
     remDisplay.style.transform = "translate(0px, 0px)";
     return;
   }
-  currentRemIndex = (currentRemIndex + dir + activeReminders.length) % activeReminders.length;
-  updateReminderContent();
-  remDisplay.style.transform = "translate(0px, 0px)";
+  
+  // スワイプした方向へフェードアウト
+  const exitX = dir > 0 ? 300 : -300;
+  // 反対側からフェードインさせるための初期位置
+  const enterX = dir > 0 ? -300 : 300;
+
+  remDisplay.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+  remDisplay.style.transform = `translateX(${exitX}px)`;
+  remDisplay.style.opacity = "0";
+
+  setTimeout(() => {
+    currentRemIndex = (currentRemIndex + dir + activeReminders.length) % activeReminders.length;
+    updateReminderContent();
+
+    // アニメーションなしで反対側に瞬間移動
+    remDisplay.style.transition = "none";
+    remDisplay.style.transform = `translateX(${enterX}px)`;
+
+    // ブラウザに位置変更を認識させるおまじない
+    void remDisplay.offsetWidth;
+
+    // 元の位置に滑らかに戻す
+    remDisplay.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+    remDisplay.style.transform = "translate(0px, 0px)";
+    remDisplay.style.opacity = "1";
+  }, 200);
 }
 
 function dismissCurrentReminder() {
@@ -1028,7 +1058,6 @@ function speak(){
   showLine(line, false);
 }
 
-// isDynamicフラグを使って、記録処理をスキップできるように変更しました
 function showLine(text, isRare, isDynamic = false){
   if (!isDynamic) saveSeen(text);
   const el = document.getElementById("speech");
