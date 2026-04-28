@@ -8,7 +8,6 @@
 <title>ひとことフブキ</title>
 
 <style>
-/* 画面幅が瞬間的に広がるのを防ぐための設定 */
 html, body {
   margin: 0;
   padding: 0;
@@ -27,7 +26,6 @@ body {
   font-family: "Segoe UI", sans-serif;
 }
 
-/* メニューやボタン（固定要素）の消失バグを防ぐ強力な設定 */
 .menu, .reminder-menu, .debug-toggle-container, .debug-menu {
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
@@ -63,7 +61,6 @@ body {
   background: #dff4ff;
 }
 
-/* モーダル共通 */
 .log {
   display: none;
   position: fixed;
@@ -102,7 +99,6 @@ body {
   100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* アプリ全体のコンテナ */
 .app-container {
   display: flex;
   flex-direction: column;
@@ -111,7 +107,6 @@ body {
   transition: 0.3s;
 }
 
-/* メイン（キャラクター） */
 .container {
   position: relative;
   width: 320px;
@@ -212,7 +207,6 @@ body {
   transform: scale(1.2);
 }
 
-/* デバッグ用UI */
 .debug-toggle-container {
   position: fixed;
   bottom: 20px;
@@ -259,7 +253,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .bd-select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; font-size: 14px; }
 
-/* リマインダー表示UI */
 .reminder-display {
   width: 320px;
   padding: 12px 16px;
@@ -288,7 +281,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .rem-count { position: absolute; top: 12px; right: 16px; font-size: 12px; color: #ff7b7b; }
 .rem-hint { font-size: 10px; color: #aaa; margin-top: 8px; text-align: right; }
 
-/* リマインダー入力欄 */
 .rem-input {
   padding: 8px;
   border: 1px solid #7fbce0;
@@ -297,6 +289,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   width: 80%;
   box-sizing: border-box;
 }
+
 </style>
 </head>
 
@@ -502,15 +495,94 @@ let typing = false;
 let pendingRewards = [];
 let isDebugMode = false;
 let debugSeen = [];
-const debugPassword = "fubuki"; 
+
+// ご指定のパスワードに変更しました
+const debugPassword = "fubuki_214_kisaragi"; 
 
 let userBirthday = localStorage.getItem("userBirthday") || null;
 let waitingForBirthdayClick = false;
 
-// リマインダー用の変数
 let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
 let currentRemIndex = 0;
+
+// 表情差分判定関数
+function getFaceImage(text) {
+  // 動的セリフ（一部一致で判定）
+  if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
+  if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
+
+  const smile = [
+    "この仕事が終わったらお茶にしましょうか",
+    "おはよう、今日もいい朝ね",
+    "今日も一日、お疲れ様",
+    "…みんな何してるかなぁ",
+    "あけましておめでとう。今年も良い一年にしましょうね",
+    "トリックオアトリート！　冗談よ、お菓子いる？",
+    "今日は大晦日ね、充実した一年だった？　来年もよろしくね",
+    "そろそろおやつにしましょうか。あなたも食べる？",
+    "もっと私のことを知りたい？　…もう十分知ってるわよ",
+    "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ",
+    "いらっしゃい、今日はどうしたの？" // 全達成報酬
+  ];
+  
+  const remember = [
+    "そういえばあの書類、そろそろ取りかからないと",
+    "坑道の見回りに行ってこようかな",
+    "今日片づける仕事はこれとあれと……",
+    "今日のおやつは何にしようかしら",
+    "今日の夜ご飯は何にしようかしら",
+    "そろそろ坑道を見に行かないと",
+    "(明日はあれやらないと…)",
+    "もう少し暇だったらバネッサまで遊びに行くんだけど",
+    "カップラーメン食べたいなぁ",
+    "護王様ってあの身体でどうやって仕事してるんだろ",
+    "今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…",
+    "今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…",
+    "…今日はあの場所の……何周年なんだ…？",
+    "今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…",
+    "いい匂い…　これはカンボジアブロッコリー…？",
+    "そういえば、あなたの誕生日っていつなの？"
+  ];
+  
+  const sleep = [
+    "すやすや…",
+    "むにゃ…",
+    "………(ぐっすり眠っているようだ)",
+    "ふふふ……(いつかの旅の夢",
+    "うぐ…うーん……(いつかの戦い",
+    "ぼくらだけの…せかい……",
+    "たんい…ほしい……",
+    "すー…すー…("
+  ];
+  
+  const puzzled = [
+    "甘いもの食べたい…",
+    "遅刻しないようにね",
+    "ちょっとお腹が空いてきたわね…",
+    "書類、誰か代わりに読んでくれないかしら",
+    "ちょっと眠いわね…",
+    "午後もわりと仕事あるわね…",
+    "(ペンを持つと絵が描きたくなる…)",
+    "これ、今日中に終わるのかな…",
+    "(夜ご飯、ルイベじゃないといいな…)",
+    "食後のデザートってずっと食べたくなるわよね",
+    "…こんな時間に何をしてるの？",
+    "早く寝なさい、身体に障るわよ",
+    "炎の魔力と轟音……　またやったわねマッヒー…",
+    "まだ起きてるの？　…仕方ないわね",
+    "私と喋ってないで、やることやりなさいよ",
+    "21時就寝は早い？千年前の私に言ってちょうだい"
+  ];
+
+  if (smile.some(s => text.includes(s))) return "fubuki_smile.png";
+  if (remember.some(s => text.includes(s))) return "fubuki_remember.png";
+  if (sleep.some(s => text.includes(s))) return "fubuki_sleep.png";
+  if (puzzled.some(s => text.includes(s))) return "fubuki_puzzled.png";
+
+  return "fubuki.png"; // どれにも当てはまらなければ通常
+}
+
 
 function addRewardToPool(key, reward) {
   if (timeLines[key] && !timeLines[key].includes(reward)) {
@@ -1064,13 +1136,11 @@ function showLine(text, isRare, isDynamic = false){
   if (!isDynamic) saveSeen(text);
   const el = document.getElementById("speech");
   el.style.color = isRare ? "#2a6fff" : "black";
+  
+  // 新しく追加した表情変更関数を呼び出します
+  document.getElementById("img").src = getFaceImage(text);
+  
   typeText(text, isDynamic);
-
-  if(text.includes("すやすや") || text.includes("むにゃ")){
-    document.getElementById("img").src = "fubuki.png";
-  } else {
-    document.getElementById("img").src = "fubuki.png";
-  }
 }
 
 function typeText(text, isDynamic = false) {
