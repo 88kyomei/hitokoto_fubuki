@@ -8,8 +8,15 @@
 <title>ひとことフブキ</title>
 
 <style>
-body {
+/* 画面幅が瞬間的に広がるのを防ぐための設定 */
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -18,10 +25,16 @@ body {
   box-sizing: border-box;
   background: #f5fbff;
   font-family: "Segoe UI", sans-serif;
-  overflow-x: hidden;
 }
 
-/* メニュー群 */
+/* メニューやボタン（固定要素）の消失バグを防ぐ強力な設定 */
+.menu, .reminder-menu, .debug-toggle-container, .debug-menu {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 .menu {
   position: fixed;
   top: 20px;
@@ -29,7 +42,6 @@ body {
   z-index: 10;
   display: flex;
   gap: 8px;
-  transform: translateZ(0); /* スマホでの消失バグ対策 */
 }
 
 .reminder-menu {
@@ -37,7 +49,6 @@ body {
   bottom: 20px;
   left: 20px;
   z-index: 10;
-  transform: translateZ(0); /* スマホでの消失バグ対策 */
 }
 
 .menu button, .reminder-menu button {
@@ -212,7 +223,6 @@ body {
   z-index: 10;
   font-size: 12px;
   color: #7fbce0;
-  transform: translateZ(0); /* スマホでの消失バグ対策 */
 }
 
 .switch {
@@ -239,7 +249,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   background: rgba(255, 255, 255, 0.9); border: 1px solid #7fbce0;
   border-radius: 8px; padding: 10px; display: flex; flex-direction: column;
   z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  transform: translateZ(0); /* スマホでの消失バグ対策 */
 }
 .debug-menu select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; color: #333; }
 .debug-menu button {
@@ -288,7 +297,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   width: 80%;
   box-sizing: border-box;
 }
-
 </style>
 </head>
 
@@ -652,7 +660,7 @@ function updateReminderContent() {
   document.getElementById("remTimeText").textContent = timeStr;
 }
 
-// スワイプ・長押し操作 (PointerEvent)
+// スワイプ・長押し操作
 let remStartX=0, remStartY=0, remCurX=0, remCurY=0;
 let remDragging = false;
 let remLongPressTimer = null;
