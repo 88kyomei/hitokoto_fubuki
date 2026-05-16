@@ -8,6 +8,7 @@
 <title>ひとことフブキ</title>
 
 <style>
+/* 画面幅の制限と背景のベース設定 */
 html, body {
   margin: 0;
   padding: 0;
@@ -22,10 +23,23 @@ body {
   align-items: flex-start;
   padding-top: 80px; 
   box-sizing: border-box;
-  background: #f5fbff;
   font-family: "Segoe UI", sans-serif;
+  
+  /* 背景のグラデーションが綺麗に表示されるように固定 */
+  background-attachment: fixed;
+  background-size: cover;
+  transition: background 1s ease;
 }
 
+/* 時間帯ごとの美しい空のグラデーション */
+body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
+body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+body.bg-noon2    { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+body.bg-evening  { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); }
+body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
+body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+
+/* 消失バグ対策 */
 .menu, .reminder-menu, .debug-toggle-container, .debug-menu {
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
@@ -49,18 +63,24 @@ body {
   z-index: 10;
 }
 
+/* すりガラス風のボタン */
 .menu button, .reminder-menu button {
   padding: 8px 14px;
-  border: 1px solid #7fbce0;
-  background: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
+  color: #333;
+  font-weight: bold;
 }
 .menu button:hover, .reminder-menu button:hover {
-  background: #dff4ff;
+  background: rgba(255, 255, 255, 0.8);
 }
 
+/* モーダル（すりガラス風） */
 .log {
   display: none;
   position: fixed;
@@ -73,16 +93,17 @@ body {
   overflow-y: auto;
 
   border-radius: 12px;
-  border: 1px solid #7fbce0;
-  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 15px;
   font-size: 12px;
+  color: #333;
 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   opacity: 0;
   transition: 0.2s;
-
   z-index: 100;
 }
 
@@ -107,25 +128,20 @@ body {
   transition: 0.3s;
 }
 
+/* メイン枠（すりガラス風で透け感を追加） */
 .container {
   position: relative;
   width: 320px;
   padding: 15px;
   border-radius: 16px;
-  border: 1px solid #7fbce0;
+  
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
   text-align: center;
-
-  background: linear-gradient(120deg, #e6f7ff, #cfeeff, #f0fbff);
-  background-size: 200% 200%;
-  animation: glow 10s ease infinite;
-
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-}
-
-@keyframes glow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 .title {
@@ -133,7 +149,9 @@ body {
   color: #2a6fff;
   margin-bottom: 8px;
   letter-spacing: 1px;
-  text-shadow: 0 0 6px rgba(80,150,255,0.3);
+  font-weight: bold;
+  /* 背景が暗くても読めるように白フチドリのシャドウを追加 */
+  text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.9);
 }
   
 .character {
@@ -141,6 +159,7 @@ body {
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
 }
 
+/* 吹き出し（すりガラス風） */
 .speech {
   position: absolute;
   bottom: -35px;
@@ -150,13 +169,16 @@ body {
   padding: 12px;
 
   border-radius: 12px;
-  border: 1px solid #7fbce0;
-  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 
   font-size: 14px;
   text-align: left;
   min-height: 45px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  color: #333;
 }
 
 .speech::after {
@@ -177,6 +199,7 @@ body {
 
   background: rgba(0,0,0,0.25);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 
   opacity: 0;
   pointer-events: none;
@@ -216,7 +239,9 @@ body {
   gap: 8px;
   z-index: 10;
   font-size: 12px;
-  color: #7fbce0;
+  /* 暗い背景でも読みやすいように影を追加 */
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .switch {
@@ -238,9 +263,13 @@ body {
 input:checked + .slider { background-color: #2a6fff; }
 input:checked + .slider:before { transform: translateX(20px); }
 
+/* デバッグメニューもすりガラスに */
 .debug-menu {
   position: fixed; bottom: 50px; right: 20px;
-  background: rgba(255, 255, 255, 0.9); border: 1px solid #7fbce0;
+  background: rgba(255, 255, 255, 0.85); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 8px; padding: 10px; display: flex; flex-direction: column;
   z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
@@ -253,13 +282,17 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .bd-select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; font-size: 14px; }
 
+/* リマインダー表示UI（すりガラス） */
 .reminder-display {
   width: 320px;
   padding: 12px 16px;
   box-sizing: border-box;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #ffb3c6;
+  
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-left: 6px solid #ff7b7b;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   text-align: left;
@@ -289,7 +322,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   width: 80%;
   box-sizing: border-box;
 }
-
 </style>
 </head>
 
@@ -315,7 +347,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 </div>
 <div class="debug-menu" id="debugMenu" style="display: none;">
   <label style="font-size: 12px; color: #2a6fff;">セリフ指定:</label>
-  <select id="debugCondition">
+  <select id="debugCondition" onchange="updateBackground()">
     <option value="all">全ランダム</option>
     <option value="morning">朝</option>
     <option value="noon1">昼1</option>
@@ -340,7 +372,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   <div style="text-align: center; margin-top: 20px;">
     パスワードを入力してください<br>
     <input type="password" id="debugPassword" style="margin: 15px 0; padding: 5px; width: 80%; border: 1px solid #7fbce0; border-radius: 4px;"><br>
-    <button onclick="checkPassword()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">認証</button>
+    <button onclick="checkPassword()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">認証</button>
   </div>
 </div>
 
@@ -351,11 +383,11 @@ input:checked + .slider:before { transform: translateX(20px); }
       あなたの誕生日は？<br><br>
       <select id="bdMonth" class="bd-select" onchange="updateBirthdayDays()"></select> 月 
       <select id="bdDay" class="bd-select"></select> 日<br><br>
-      <button onclick="confirmBirthday()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">確認</button>
+      <button onclick="confirmBirthday()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">確認</button>
     </div>
     <div id="bdConfirmArea" style="display: none;">
       <span id="bdConfirmText" style="color: #2a6fff;"></span><br>でよろしいですか？<br><br>
-      <button onclick="saveBirthday()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">OK！</button>
+      <button onclick="saveBirthday()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">OK！</button>
       <button onclick="cancelBirthday()" style="padding: 5px 15px; border: 1px solid #ff7b7b; background: #fff0f0; border-radius: 4px; cursor: pointer; margin-left: 10px;">やり直す</button>
     </div>
   </div>
@@ -370,7 +402,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       <input type="date" id="remDateInput" class="rem-input" style="width: auto; padding: 6px;">
       <input type="time" id="remTimeInput" class="rem-input" style="width: auto; padding: 6px;">
     </div>
-    <button onclick="saveNewReminder()" style="padding: 6px 20px; border: 1px solid #7fbce0; background: #e6f7ff; border-radius: 4px; cursor: pointer;">作成</button>
+    <button onclick="saveNewReminder()" style="padding: 6px 20px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">作成</button>
   </div>
 </div>
 
@@ -495,8 +527,6 @@ let typing = false;
 let pendingRewards = [];
 let isDebugMode = false;
 let debugSeen = [];
-
-// ご指定のパスワードに変更しました
 const debugPassword = "fubuki_214_kisaragi"; 
 
 let userBirthday = localStorage.getItem("userBirthday") || null;
@@ -508,7 +538,6 @@ let currentRemIndex = 0;
 
 // 表情差分判定関数
 function getFaceImage(text) {
-  // 動的セリフ（一部一致で判定）
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
 
@@ -523,7 +552,7 @@ function getFaceImage(text) {
     "そろそろおやつにしましょうか。あなたも食べる？",
     "もっと私のことを知りたい？　…もう十分知ってるわよ",
     "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ",
-    "いらっしゃい、今日はどうしたの？" // 全達成報酬
+    "いらっしゃい、今日はどうしたの？"
   ];
   
   const remember = [
@@ -580,9 +609,26 @@ function getFaceImage(text) {
   if (sleep.some(s => text.includes(s))) return "fubuki_sleep.png";
   if (puzzled.some(s => text.includes(s))) return "fubuki_puzzled.png";
 
-  return "fubuki.png"; // どれにも当てはまらなければ通常
+  return "fubuki.png";
 }
 
+// ===== 背景切り替え機能 =====
+function updateBackground() {
+  const now = new Date();
+  const hour = now.getHours();
+  const zone = getZone(hour);
+  
+  // デバッグモードで時間帯が指定されている場合はそちらを優先
+  let targetZone = zone;
+  if (isDebugMode) {
+    const condition = document.getElementById("debugCondition").value;
+    if (["morning", "noon1", "noon2", "evening", "night", "midnight"].includes(condition)) {
+      targetZone = condition;
+    }
+  }
+  
+  document.body.className = "bg-" + targetZone;
+}
 
 function addRewardToPool(key, reward) {
   if (timeLines[key] && !timeLines[key].includes(reward)) {
@@ -649,6 +695,7 @@ function initializeAchievements(targetSeen) {
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
 initializeAchievements(seen);
+updateBackground(); // 初期読み込み時の背景更新
 
 // ===== リマインダー機能 =====
 function saveReminders() {
@@ -732,7 +779,6 @@ function updateReminderContent() {
   document.getElementById("remTimeText").textContent = timeStr;
 }
 
-// スワイプ・長押し操作
 let remStartX=0, remStartY=0, remCurX=0, remCurY=0;
 let remDragging = false;
 let remLongPressTimer = null;
@@ -849,7 +895,11 @@ function dismissCurrentReminder() {
   }, 300);
 }
 
-setInterval(checkActiveReminders, 10000);
+// 10秒ごとにリマインダーと背景をチェック
+setInterval(() => {
+  checkActiveReminders();
+  updateBackground();
+}, 10000);
 checkActiveReminders();
 
 // ===== モーダル等その他の機能 =====
@@ -949,6 +999,7 @@ function handleDebugToggle(checkbox) {
     document.getElementById("debugMenu").style.display = "none";
     alert("デバッグモードを終了しました。履歴は通常モードに戻ります。");
     initializeAchievements(seen);
+    updateBackground();
   }
 }
 
@@ -971,6 +1022,7 @@ function checkPassword() {
     document.getElementById("debugPassword").value = "";
     document.getElementById("debugMenu").style.display = "flex";
     closePasswordModal();
+    updateBackground();
     alert("デバッグモードを開始しました。");
   } else {
     alert("パスワードが違います。");
@@ -1053,6 +1105,8 @@ function getZone(hour){
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function speak(){
+  updateBackground(); // クリックした際に時間帯をチェックして背景を更新
+
   if (waitingForBirthdayClick) {
     waitingForBirthdayClick = false;
     openBirthdayModal();
@@ -1135,9 +1189,8 @@ function speak(){
 function showLine(text, isRare, isDynamic = false){
   if (!isDynamic) saveSeen(text);
   const el = document.getElementById("speech");
-  el.style.color = isRare ? "#2a6fff" : "black";
+  el.style.color = isRare ? "#2a6fff" : "#333";
   
-  // 新しく追加した表情変更関数を呼び出します
   document.getElementById("img").src = getFaceImage(text);
   
   typeText(text, isDynamic);
