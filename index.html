@@ -9,13 +9,13 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hina+Mincho&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
 /* フォントの設定 */
 :root {
-  --font-main: 'Noto Sans JP', sans-serif; /* 全体のベース */
-  --font-classic: 'Hina Mincho', serif;    /* タイトルや吹き出しに */
+  --font-main: 'Noto Sans JP', sans-serif;
+  --font-classic: 'Klee One', serif;
 }
 
 html, body {
@@ -38,33 +38,30 @@ body {
   background-attachment: fixed;
   background-size: cover;
   transition: background 1s ease;
-  position: relative; /* 星空レイヤーの基準 */
+  position: relative;
 }
 
-/* --- 背景のグラデーション（調整） --- */
+/* --- 背景のグラデーション --- */
 body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
 body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
-/* 昼2: 深い青へ調整 */
-body.bg-noon2    { background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%); }
-/* 夕方: 夜の紺や紫を足してドラマチックに */
+body.bg-noon2    { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); } /* 青空に修正 */
 body.bg-evening  { background: linear-gradient(135deg, #0b1a3d 0%, #4b1c5a 40%, #ff7e5f 100%); }
 body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
 body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
 
-/* --- 星空レイヤー（新規） --- */
+/* --- 星空レイヤー --- */
 .star-field {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* クリックを邪魔しない */
-  z-index: 1; /* 背景のすぐ上 */
+  pointer-events: none;
+  z-index: 1;
   opacity: 0;
   transition: opacity 1s ease;
 }
 
-/* 夜の星（Radial Gradient で白い点を作成して重ねる） */
 body.bg-night .star-field, body.bg-midnight .star-field { opacity: 1; }
 
 .star-field::before, .star-field::after {
@@ -79,7 +76,6 @@ body.bg-night .star-field, body.bg-midnight .star-field { opacity: 1; }
   background-position: 0 0, 40px 60px, 130px 270px;
 }
 
-/* 深夜: 星をより多く、少し大きく */
 body.bg-midnight .star-field::after {
   background-image: 
     radial-gradient(white, rgba(255,255,255,.25) 2px, transparent 3px),
@@ -112,7 +108,7 @@ body.bg-midnight .star-field::after {
   z-index: 10;
 }
 
-/* すりガラス風のボタン（フォント調整） */
+/* ボタン (Klee One適用) */
 .menu button, .reminder-menu button {
   padding: 8px 14px;
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -123,14 +119,15 @@ body.bg-midnight .star-field::after {
   cursor: pointer;
   transition: 0.2s;
   color: #333;
-  font-family: var(--font-main);
-  font-weight: bold;
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: 15px;
 }
 .menu button:hover, .reminder-menu button:hover {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* モーダル（すりガラス風、フォント調整） */
+/* モーダル */
 .log {
   display: none;
   position: fixed;
@@ -159,8 +156,8 @@ body.bg-midnight .star-field::after {
 
 .log-title {
   font-family: var(--font-classic);
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 600;
   margin-bottom: 10px;
   color: #2a6fff;
 }
@@ -184,10 +181,9 @@ body.bg-midnight .star-field::after {
   align-items: center;
   gap: 60px;
   transition: 0.3s;
-  z-index: 2; /* 星空の上 */
+  z-index: 2;
 }
 
-/* メイン枠（すりガラス風） */
 .container {
   position: relative;
   width: 320px;
@@ -203,17 +199,24 @@ body.bg-midnight .star-field::after {
   text-align: center;
 }
 
-/* タイトル: 視認性向上のため、白のアウトラインを追加し、和風フォントへ */
+/* タイトル (Klee One適用、時間帯で色が切り替わる) */
 .title {
   font-family: var(--font-classic);
-  font-size: 20px;
-  color: #2a6fff;
+  font-size: 22px;
   margin-bottom: 8px;
   letter-spacing: 2px;
-  font-weight: bold;
-  
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
-  text-shadow: 0 0 10px rgba(80, 150, 255, 0.5);
+  font-weight: 600;
+  transition: color 1s ease, text-shadow 1s ease;
+}
+
+body.bg-morning .title, body.bg-noon1 .title {
+  color: #333;
+  text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.8);
+}
+
+body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midnight .title {
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.3);
 }
   
 .character {
@@ -221,7 +224,7 @@ body.bg-midnight .star-field::after {
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
 }
 
-/* 吹き出し（すりガラス風、フォント調整） */
+/* 吹き出し (通常のフォント) */
 .speech {
   position: absolute;
   bottom: -35px;
@@ -236,8 +239,8 @@ body.bg-midnight .star-field::after {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 
-  font-family: var(--font-classic);
-  font-size: 15px;
+  font-family: var(--font-main);
+  font-size: 14px;
   text-align: left;
   min-height: 45px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -293,6 +296,7 @@ body.bg-midnight .star-field::after {
   transform: scale(1.2);
 }
 
+/* デバッグモードのトグル (Klee One適用) */
 .debug-toggle-container {
   position: fixed;
   bottom: 20px;
@@ -301,9 +305,10 @@ body.bg-midnight .star-field::after {
   align-items: center;
   gap: 8px;
   z-index: 10;
-  font-size: 12px;
+  font-size: 15px;
   color: #fff;
-  font-family: var(--font-main);
+  font-family: var(--font-classic);
+  font-weight: 600;
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
@@ -326,7 +331,6 @@ body.bg-midnight .star-field::after {
 input:checked + .slider { background-color: #2a6fff; }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* デバッグメニューもすりガラスに */
 .debug-menu {
   position: fixed; bottom: 50px; right: 20px;
   background: rgba(255, 255, 255, 0.85); 
@@ -346,7 +350,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .bd-select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; font-size: 14px; }
 
-/* リマインダー表示UI（すりガラス、フォント調整） */
+/* リマインダー表示UI */
 .reminder-display {
   width: 320px;
   padding: 12px 16px;
@@ -376,7 +380,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .rem-title {
   font-family: var(--font-classic);
-  font-size: 16px; font-weight: bold; color: #d93030; margin-bottom: 4px; 
+  font-size: 18px; font-weight: 600; color: #d93030; margin-bottom: 4px; 
 }
 .rem-time { font-family: var(--font-main); font-size: 12px; color: #666; }
 .rem-count { font-family: var(--font-main); position: absolute; top: 12px; right: 16px; font-size: 12px; color: #ff7b7b; }
@@ -396,7 +400,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 <body>
 
-<div class="star-field"></div> <div id="overlay" class="overlay"></div>
+<div class="star-field"></div>
+<div id="overlay" class="overlay"></div>
 
 <div class="menu">
   <button onclick="toggleLog()">セリフ一覧</button>
@@ -468,7 +473,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div id="reminderCreateModal" class="log">
   <button class="closeBtn" onclick="closeReminderCreateModal()">×</button>
   <div style="text-align: center; margin-top: 20px;">
-    <span style="font-size: 14px; color: #2a6fff; font-family: var(--font-classic); font-size: 16px;">新しいリマインダー</span><br><br>
+    <span style="font-size: 18px; color: #2a6fff; font-family: var(--font-classic); font-weight: 600;">新しいリマインダー</span><br><br>
     <input type="text" id="remTitleInput" class="rem-input" placeholder="タイトル (例: レポート提出)"><br>
     <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
       <input type="date" id="remDateInput" class="rem-input" style="width: auto; padding: 6px;">
@@ -558,7 +563,7 @@ normal: [
 "護王様ってあの身体でどうやって仕事してるんだろ"
 ],
 midnight: [
-"ふふ……(いつかの旅の夢を見ているようだ)",
+"ふふふ……(いつかの旅の夢を見ているようだ)",
 "うぐ…うーん……(いつかの戦いの夢を見ているようだ)",
 "ぼくらだけの…せかい……(いつかの居場所の夢を見ているようだ)",
 "たんい…ほしい……(いつかの学び舎の夢を見ているようだ)",
@@ -608,7 +613,6 @@ let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
 let currentRemIndex = 0;
 
-// 表情差分判定関数 
 function getFaceImage(text) {
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
@@ -684,7 +688,6 @@ function getFaceImage(text) {
   return "fubuki.png";
 }
 
-// ===== 背景切り替え機能 =====
 function updateBackground() {
   const now = new Date();
   const hour = now.getHours();
@@ -768,7 +771,6 @@ let seen = JSON.parse(localStorage.getItem("seen") || "[]");
 initializeAchievements(seen);
 updateBackground();
 
-// ===== リマインダー機能 =====
 function saveReminders() {
   localStorage.setItem("reminders", JSON.stringify(allReminders));
 }
@@ -972,7 +974,6 @@ setInterval(() => {
 }, 10000);
 checkActiveReminders();
 
-// ===== モーダル等その他の機能 =====
 function openBirthdayModal() {
   const mSel = document.getElementById("bdMonth");
   mSel.innerHTML = "";
