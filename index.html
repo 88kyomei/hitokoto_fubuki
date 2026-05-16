@@ -521,8 +521,7 @@ noon1: [
 ],
 noon2: [
 "ちょっと眠いわね…",
-"今日のおやつは何にしようかしら
-",
+"今日のおやつは何にしようかしら",
 "午後もわりと仕事あるわね…",
 "ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
 "(ペンを持つと絵が描きたくなる… ペン習字はじめようかしら)"
@@ -536,9 +535,9 @@ evening: [
 ],
 night: [
 "今日も一日、お疲れ様",
-"夜ご飯おいしかったわ、どこの具材使ってたんだろう",
+"夜ご飯おいしかったわ、どどこの具材使ってたんだろう",
 "食後のデザートってずっと食べたくなるわよね",
-"私はそろそろ寝わ。おやすみなさい",
+"私はそろそろ寝るわ。おやすみなさい",
 "(明日はあれやらないと… アレってなんだっけ)"
 ],
 midnight: [
@@ -609,7 +608,7 @@ let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
 let currentRemIndex = 0;
 
-// 表情差分判定関数 (Hina Mincho font 導入に伴いセリフを少しだけアップデート)
+// 表情差分判定関数 
 function getFaceImage(text) {
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
