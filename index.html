@@ -7,13 +7,24 @@
 <link rel="apple-touch-icon" href="icon.png">
 <title>ひとことフブキ</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hina+Mincho&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
-/* 画面幅の制限と背景のベース設定 */
+/* フォントの設定 */
+:root {
+  --font-main: 'Noto Sans JP', sans-serif; /* 全体のベース */
+  --font-classic: 'Hina Mincho', serif;    /* タイトルや吹き出しに */
+}
+
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   overflow-x: hidden;
+  font-family: var(--font-main);
+  color: #333;
 }
 
 body {
@@ -23,21 +34,59 @@ body {
   align-items: flex-start;
   padding-top: 80px; 
   box-sizing: border-box;
-  font-family: "Segoe UI", sans-serif;
   
-  /* 背景のグラデーションが綺麗に表示されるように固定 */
   background-attachment: fixed;
   background-size: cover;
   transition: background 1s ease;
+  position: relative; /* 星空レイヤーの基準 */
 }
 
-/* 時間帯ごとの美しい空のグラデーション */
+/* --- 背景のグラデーション（調整） --- */
 body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
 body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
-body.bg-noon2    { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-body.bg-evening  { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); }
+/* 昼2: 深い青へ調整 */
+body.bg-noon2    { background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%); }
+/* 夕方: 夜の紺や紫を足してドラマチックに */
+body.bg-evening  { background: linear-gradient(135deg, #0b1a3d 0%, #4b1c5a 40%, #ff7e5f 100%); }
 body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
 body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+
+/* --- 星空レイヤー（新規） --- */
+.star-field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* クリックを邪魔しない */
+  z-index: 1; /* 背景のすぐ上 */
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+/* 夜の星（Radial Gradient で白い点を作成して重ねる） */
+body.bg-night .star-field, body.bg-midnight .star-field { opacity: 1; }
+
+.star-field::before, .star-field::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: 
+    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+  background-size: 550px 550px, 350px 350px, 250px 250px;
+  background-position: 0 0, 40px 60px, 130px 270px;
+}
+
+/* 深夜: 星をより多く、少し大きく */
+body.bg-midnight .star-field::after {
+  background-image: 
+    radial-gradient(white, rgba(255,255,255,.25) 2px, transparent 3px),
+    radial-gradient(white, rgba(255,255,255,.2) 1px, transparent 2px);
+  background-size: 300px 300px, 200px 200px;
+  background-position: 150px 150px, 70px 110px;
+}
 
 /* 消失バグ対策 */
 .menu, .reminder-menu, .debug-toggle-container, .debug-menu {
@@ -63,7 +112,7 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   z-index: 10;
 }
 
-/* すりガラス風のボタン */
+/* すりガラス風のボタン（フォント調整） */
 .menu button, .reminder-menu button {
   padding: 8px 14px;
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -74,13 +123,14 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   cursor: pointer;
   transition: 0.2s;
   color: #333;
+  font-family: var(--font-main);
   font-weight: bold;
 }
 .menu button:hover, .reminder-menu button:hover {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* モーダル（すりガラス風） */
+/* モーダル（すりガラス風、フォント調整） */
 .log {
   display: none;
   position: fixed;
@@ -107,6 +157,14 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   z-index: 100;
 }
 
+.log-title {
+  font-family: var(--font-classic);
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #2a6fff;
+}
+
 .log.show {
   display: block;
   opacity: 1;
@@ -126,9 +184,10 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   align-items: center;
   gap: 60px;
   transition: 0.3s;
+  z-index: 2; /* 星空の上 */
 }
 
-/* メイン枠（すりガラス風で透け感を追加） */
+/* メイン枠（すりガラス風） */
 .container {
   position: relative;
   width: 320px;
@@ -144,14 +203,17 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   text-align: center;
 }
 
+/* タイトル: 視認性向上のため、白のアウトラインを追加し、和風フォントへ */
 .title {
-  font-size: 18px;
+  font-family: var(--font-classic);
+  font-size: 20px;
   color: #2a6fff;
   margin-bottom: 8px;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   font-weight: bold;
-  /* 背景が暗くても読めるように白フチドリのシャドウを追加 */
-  text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.9);
+  
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 10px rgba(80, 150, 255, 0.5);
 }
   
 .character {
@@ -159,7 +221,7 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
 }
 
-/* 吹き出し（すりガラス風） */
+/* 吹き出し（すりガラス風、フォント調整） */
 .speech {
   position: absolute;
   bottom: -35px;
@@ -174,7 +236,8 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 
-  font-size: 14px;
+  font-family: var(--font-classic);
+  font-size: 15px;
   text-align: left;
   min-height: 45px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -239,8 +302,8 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   gap: 8px;
   z-index: 10;
   font-size: 12px;
-  /* 暗い背景でも読みやすいように影を追加 */
   color: #fff;
+  font-family: var(--font-main);
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
@@ -272,6 +335,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 8px; padding: 10px; display: flex; flex-direction: column;
   z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  font-family: var(--font-main);
 }
 .debug-menu select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; color: #333; }
 .debug-menu button {
@@ -282,7 +346,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .bd-select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; font-size: 14px; }
 
-/* リマインダー表示UI（すりガラス） */
+/* リマインダー表示UI（すりガラス、フォント調整） */
 .reminder-display {
   width: 320px;
   padding: 12px 16px;
@@ -300,6 +364,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   touch-action: none;
   user-select: none;
   cursor: grab;
+  color: #333;
 }
 
 .reminder-display:active { cursor: grabbing; }
@@ -309,10 +374,13 @@ input:checked + .slider:before { transform: translateX(20px); }
   border-color: #ff7b7b;
 }
 
-.rem-title { font-size: 15px; color: #d93030; margin-bottom: 4px; }
-.rem-time { font-size: 12px; color: #666; }
-.rem-count { position: absolute; top: 12px; right: 16px; font-size: 12px; color: #ff7b7b; }
-.rem-hint { font-size: 10px; color: #aaa; margin-top: 8px; text-align: right; }
+.rem-title {
+  font-family: var(--font-classic);
+  font-size: 16px; font-weight: bold; color: #d93030; margin-bottom: 4px; 
+}
+.rem-time { font-family: var(--font-main); font-size: 12px; color: #666; }
+.rem-count { font-family: var(--font-main); position: absolute; top: 12px; right: 16px; font-size: 12px; color: #ff7b7b; }
+.rem-hint { font-family: var(--font-main); font-size: 10px; color: #aaa; margin-top: 8px; text-align: right; }
 
 .rem-input {
   padding: 8px;
@@ -321,13 +389,14 @@ input:checked + .slider:before { transform: translateX(20px); }
   font-size: 14px;
   width: 80%;
   box-sizing: border-box;
+  font-family: var(--font-main);
 }
 </style>
 </head>
 
 <body>
 
-<div id="overlay" class="overlay"></div>
+<div class="star-field"></div> <div id="overlay" class="overlay"></div>
 
 <div class="menu">
   <button onclick="toggleLog()">セリフ一覧</button>
@@ -364,7 +433,10 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 <div id="log" class="log">
   <button class="closeBtn" onclick="toggleLog()">×</button>
-  <div id="logContent"></div>
+  <div id="logContent">
+    <div class="log-title">セリフ図鑑</div>
+    <div id="logList"></div>
+  </div>
 </div>
 
 <div id="passwordModal" class="log">
@@ -396,7 +468,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div id="reminderCreateModal" class="log">
   <button class="closeBtn" onclick="closeReminderCreateModal()">×</button>
   <div style="text-align: center; margin-top: 20px;">
-    <span style="font-size: 14px; color: #2a6fff;">新しいリマインダー</span><br><br>
+    <span style="font-size: 14px; color: #2a6fff; font-family: var(--font-classic); font-size: 16px;">新しいリマインダー</span><br><br>
     <input type="text" id="remTitleInput" class="rem-input" placeholder="タイトル (例: レポート提出)"><br>
     <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
       <input type="date" id="remDateInput" class="rem-input" style="width: auto; padding: 6px;">
@@ -449,24 +521,25 @@ noon1: [
 ],
 noon2: [
 "ちょっと眠いわね…",
-"今日のおやつは何にしようかしら",
+"今日のおやつは何にしようかしら
+",
 "午後もわりと仕事あるわね…",
 "ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
-"(ペンを持つと絵が描きたくなる…)"
+"(ペンを持つと絵が描きたくなる… ペン習字はじめようかしら)"
 ],
 evening: [
 "今日の夜ご飯は何にしようかしら",
 "これ、今日中に終わるのかな…",
 "不意に屋台の食べ物が食べたくなってきたわ",
 "そろそろ坑道を見に行かないと",
-"(夜ご飯、ルイベじゃないといいな…)"
+"(夜ご飯、ルイベじゃないといいな… ルイベ以外のもの食べたい)"
 ],
 night: [
 "今日も一日、お疲れ様",
 "夜ご飯おいしかったわ、どこの具材使ってたんだろう",
 "食後のデザートってずっと食べたくなるわよね",
-"私はそろそろ寝るわ。おやすみなさい",
-"(明日はあれやらないと…)"
+"私はそろそろ寝わ。おやすみなさい",
+"(明日はあれやらないと… アレってなんだっけ)"
 ],
 midnight: [
 "すやすや…(日常の夢を見ているようだ)",
@@ -479,10 +552,10 @@ midnight: [
 
 const rareLines = {
 normal: [
-"炎の魔力と轟音……　またやったわねマッヒー…",
+"炎の魔力と轟音……　またやったわねマッヒー… (あいつマジで許さん)",
 "もう少し暇だったらバネッサまで遊びに行くんだけど",
 "…みんな何してるかなぁ",
-"カップラーメン食べたいなぁ",
+"カップラーメン食べたいなぁ (味噌バターコーンが良い)",
 "護王様ってあの身体でどうやって仕事してるんだろ"
 ],
 midnight: [
@@ -497,9 +570,9 @@ midnight: [
 const eventLines = {
 "1-1": ["あけましておめでとう。今年も良い一年にしましょうね"],
 "1-12": ["今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…"],
-"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ"],
+"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ (嘘に決まってるでしょ)"],
 "5-17": ["今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…"],
-"8-5": ["…今日はあの場所の……何周年なんだ…？"],
+"8-5": ["…今日はあの場所の……何周年なんだ…？ (もう忘れちゃった)"],
 "10-31": ["トリックオアトリート！　冗談よ、お菓子いる？"],
 "12-25": ["今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…"],
 "12-31": ["今日は大晦日ね、充実した一年だった？　来年もよろしくね"]
@@ -508,19 +581,19 @@ const eventLines = {
 const achievementLines = [];
   
 const achievements = {
-  morning: { lines: [...timeLines.morning], reward: "ふわぁ……まだ少し眠いわね", unlocked: false },
-  noon1: { lines: [...timeLines.noon1], reward: "私と喋ってないで、やることやりなさいよ", unlocked: false },
-  noon2: { lines: [...timeLines.noon2], reward: "そろそろおやつにしましょうか。あなたも食べる？", unlocked: false },
-  evening: { lines: [...timeLines.evening], reward: "いい匂い…　これはカンボジアブロッコリー…？", unlocked: false },
-  night: { lines: [...timeLines.night], reward: "21時就寝は早い？千年前の私に言ってちょうだい", unlocked: false },
-  late: { lines: [...timeLines.midnight], reward: "すー…すー…(おいしいごはんの夢を見ているようだ)", unlocked: false },
-  rare: { lines: [...rareLines.normal], reward: "もっと私のことを知りたい？　…もう十分知ってるわよ", unlocked: false },
-  seasonal: { lines: [...Object.values(eventLines).flat()], reward: "そういえば、あなたの誕生日っていつなの？", unlocked: false }
+  morning: { lines: [...timeLines.morning], reward: "ふわぁ……まだ少し眠いわね (あと5分だけ)", unlocked: false },
+  noon1: { lines: [...timeLines.noon1], reward: "私と喋ってないで、やることやりなさいよ (仕事仕事！)", unlocked: false },
+  noon2: { lines: [...timeLines.noon2], reward: "そろそろおやつにしましょうか。あなたも食べる？ (美味しいよ)", unlocked: false },
+  evening: { lines: [...timeLines.evening], reward: "いい匂い…　これはカンボジアブロッコリー…？ (気のせいか)", unlocked: false },
+  night: { lines: [...timeLines.night], reward: "21時就寝は早い？千年前の私に言ってちょうだい (健康第一)", unlocked: false },
+  late: { lines: [...timeLines.midnight], reward: "すー…すー…(おいしいごはんの夢を見ているようだ) (よだれが…)", unlocked: false },
+  rare: { lines: [...rareLines.normal], reward: "もっと私のことを知りたい？　…もう十分知ってるわよ (秘密主義なの)", unlocked: false },
+  seasonal: { lines: [...Object.values(eventLines).flat()], reward: "そういえば、あなたの誕生日っていつなの？ (教えてよ)", unlocked: false }
 };
 
-const playerBirthdayLine = "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ";
+const playerBirthdayLine = "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ (祝ってあげる)";
 
-achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？", unlocked: false };
+achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？ (何でも言ってちょうだい)", unlocked: false };
 
 // ===== ロジック・状態管理 =====
 let typing = false;
@@ -536,7 +609,7 @@ let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
 let currentRemIndex = 0;
 
-// 表情差分判定関数
+// 表情差分判定関数 (Hina Mincho font 導入に伴いセリフを少しだけアップデート)
 function getFaceImage(text) {
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
@@ -618,7 +691,6 @@ function updateBackground() {
   const hour = now.getHours();
   const zone = getZone(hour);
   
-  // デバッグモードで時間帯が指定されている場合はそちらを優先
   let targetZone = zone;
   if (isDebugMode) {
     const condition = document.getElementById("debugCondition").value;
@@ -695,7 +767,7 @@ function initializeAchievements(targetSeen) {
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
 initializeAchievements(seen);
-updateBackground(); // 初期読み込み時の背景更新
+updateBackground();
 
 // ===== リマインダー機能 =====
 function saveReminders() {
@@ -895,7 +967,6 @@ function dismissCurrentReminder() {
   }, 300);
 }
 
-// 10秒ごとにリマインダーと背景をチェック
 setInterval(() => {
   checkActiveReminders();
   updateBackground();
@@ -1066,8 +1137,8 @@ function toggleLog() {
 }
 
 function renderLog() {
-  const log = document.getElementById("logContent");
-  log.innerHTML = "";
+  const logList = document.getElementById("logList");
+  logList.innerHTML = "";
   const currentSeen = isDebugMode ? debugSeen : seen;
   const allRewards = [];
   for (let key in achievements) allRewards.push(achievements[key].reward);
@@ -1083,13 +1154,13 @@ function renderLog() {
   ];
 
   sections.forEach(([name, arr]) => {
-    log.innerHTML += `<b>${name}</b><br>`;
+    logList.innerHTML += `<b style="font-family: var(--font-classic); color: #2a6fff;">${name}</b><br>`;
     arr.forEach(text => {
       if (name !== "アチーブメント" && allRewards.includes(text)) return; 
-      log.innerHTML += currentSeen.includes(text) ? text : "？？？";
-      log.innerHTML += "<br>";
+      logList.innerHTML += currentSeen.includes(text) ? text : "？？？";
+      logList.innerHTML += "<br>";
     });
-    log.innerHTML += "<br>";
+    logList.innerHTML += "<br>";
   });
 }
 
@@ -1105,7 +1176,7 @@ function getZone(hour){
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function speak(){
-  updateBackground(); // クリックした際に時間帯をチェックして背景を更新
+  updateBackground();
 
   if (waitingForBirthdayClick) {
     waitingForBirthdayClick = false;
