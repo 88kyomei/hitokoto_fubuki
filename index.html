@@ -524,21 +524,21 @@ noon2: [
 "今日のおやつは何にしようかしら",
 "午後もわりと仕事あるわね…",
 "ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
-"(ペンを持つと絵が描きたくなる… ペン習字はじめようかしら)"
+"(ペンを持つと絵が描きたくなる…)"
 ],
 evening: [
 "今日の夜ご飯は何にしようかしら",
 "これ、今日中に終わるのかな…",
 "不意に屋台の食べ物が食べたくなってきたわ",
 "そろそろ坑道を見に行かないと",
-"(夜ご飯、ルイベじゃないといいな… ルイベ以外のもの食べたい)"
+"(夜ご飯、ルイベじゃないといいな…)"
 ],
 night: [
 "今日も一日、お疲れ様",
-"夜ご飯おいしかったわ、どどこの具材使ってたんだろう",
+"夜ご飯おいしかったわ、どこの具材使ってたんだろう",
 "食後のデザートってずっと食べたくなるわよね",
 "私はそろそろ寝るわ。おやすみなさい",
-"(明日はあれやらないと… アレってなんだっけ)"
+"(明日はあれやらないと…)"
 ],
 midnight: [
 "すやすや…(日常の夢を見ているようだ)",
@@ -551,14 +551,14 @@ midnight: [
 
 const rareLines = {
 normal: [
-"炎の魔力と轟音……　またやったわねマッヒー… (あいつマジで許さん)",
+"炎の魔力と轟音……　またやったわねマッヒー…",
 "もう少し暇だったらバネッサまで遊びに行くんだけど",
 "…みんな何してるかなぁ",
-"カップラーメン食べたいなぁ (味噌バターコーンが良い)",
+"カップラーメン食べたいなぁ",
 "護王様ってあの身体でどうやって仕事してるんだろ"
 ],
 midnight: [
-"ふふふ……(いつかの旅の夢を見ているようだ)",
+"ふふ……(いつかの旅の夢を見ているようだ)",
 "うぐ…うーん……(いつかの戦いの夢を見ているようだ)",
 "ぼくらだけの…せかい……(いつかの居場所の夢を見ているようだ)",
 "たんい…ほしい……(いつかの学び舎の夢を見ているようだ)",
@@ -569,9 +569,9 @@ midnight: [
 const eventLines = {
 "1-1": ["あけましておめでとう。今年も良い一年にしましょうね"],
 "1-12": ["今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…"],
-"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ (嘘に決まってるでしょ)"],
+"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ"],
 "5-17": ["今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…"],
-"8-5": ["…今日はあの場所の……何周年なんだ…？ (もう忘れちゃった)"],
+"8-5": ["…今日はあの場所の……何周年なんだ…？"],
 "10-31": ["トリックオアトリート！　冗談よ、お菓子いる？"],
 "12-25": ["今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…"],
 "12-31": ["今日は大晦日ね、充実した一年だった？　来年もよろしくね"]
@@ -580,19 +580,19 @@ const eventLines = {
 const achievementLines = [];
   
 const achievements = {
-  morning: { lines: [...timeLines.morning], reward: "ふわぁ……まだ少し眠いわね (あと5分だけ)", unlocked: false },
-  noon1: { lines: [...timeLines.noon1], reward: "私と喋ってないで、やることやりなさいよ (仕事仕事！)", unlocked: false },
-  noon2: { lines: [...timeLines.noon2], reward: "そろそろおやつにしましょうか。あなたも食べる？ (美味しいよ)", unlocked: false },
-  evening: { lines: [...timeLines.evening], reward: "いい匂い…　これはカンボジアブロッコリー…？ (気のせいか)", unlocked: false },
-  night: { lines: [...timeLines.night], reward: "21時就寝は早い？千年前の私に言ってちょうだい (健康第一)", unlocked: false },
-  late: { lines: [...timeLines.midnight], reward: "すー…すー…(おいしいごはんの夢を見ているようだ) (よだれが…)", unlocked: false },
-  rare: { lines: [...rareLines.normal], reward: "もっと私のことを知りたい？　…もう十分知ってるわよ (秘密主義なの)", unlocked: false },
-  seasonal: { lines: [...Object.values(eventLines).flat()], reward: "そういえば、あなたの誕生日っていつなの？ (教えてよ)", unlocked: false }
+  morning: { lines: [...timeLines.morning], reward: "ふわぁ……まだ少し眠いわね", unlocked: false },
+  noon1: { lines: [...timeLines.noon1], reward: "私と喋ってないで、やることやりなさいよ", unlocked: false },
+  noon2: { lines: [...timeLines.noon2], reward: "そろそろおやつにしましょうか。あなたも食べる？", unlocked: false },
+  evening: { lines: [...timeLines.evening], reward: "いい匂い…　これはカンボジアブロッコリー…？", unlocked: false },
+  night: { lines: [...timeLines.night], reward: "21時就寝は早い？千年前の私に言ってちょうだい", unlocked: false },
+  late: { lines: [...timeLines.midnight], reward: "すー…すー…(おいしいごはんの夢を見ているようだ)", unlocked: false },
+  rare: { lines: [...rareLines.normal], reward: "もっと私のことを知りたい？　…もう十分知ってるわよ", unlocked: false },
+  seasonal: { lines: [...Object.values(eventLines).flat()], reward: "そういえば、あなたの誕生日っていつなの？", unlocked: false }
 };
 
-const playerBirthdayLine = "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ (祝ってあげる)";
+const playerBirthdayLine = "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ";
 
-achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？ (何でも言ってちょうだい)", unlocked: false };
+achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？", unlocked: false };
 
 // ===== ロジック・状態管理 =====
 let typing = false;
