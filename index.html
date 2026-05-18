@@ -411,6 +411,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div class="menu">
   <button onclick="toggleLog()">セリフ一覧</button>
   <button id="editBirthdayBtn" onclick="openBirthdayModal()" style="display: none;">誕生日設定</button>
+  <button id="musicRoomBtn" onclick="openMusicRoomModal()" style="display: none;">音楽室</button>
 </div>
 
 <div class="reminder-menu">
@@ -485,6 +486,25 @@ input:checked + .slider:before { transform: translateX(20px); }
       <input type="time" id="remTimeInput" class="rem-input" style="width: auto; padding: 6px;">
     </div>
     <button onclick="saveNewReminder()" style="padding: 6px 20px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">作成</button>
+  </div>
+</div>
+
+<div id="musicSelectModal" class="log">
+  <div style="text-align: center; margin-top: 10px;">
+    <span style="font-family: var(--font-classic); font-size: 18px; color: #2a6fff; font-weight: 600;">どの曲が聴きたい？</span><br><br>
+    <button onclick="playPianoEvent('song1')" class="rem-input" style="margin-bottom: 10px; cursor:pointer;">氷柱降る森の曲</button><br>
+    <button onclick="playPianoEvent('song2')" class="rem-input" style="margin-bottom: 10px; cursor:pointer;">澄み渡る黎明の曲</button><br>
+    <button onclick="playPianoEvent('song3')" class="rem-input" style="cursor:pointer;">思い出の夏の曲</button>
+  </div>
+</div>
+
+<div id="musicRoomModal" class="log">
+  <button class="closeBtn" onclick="closeMusicRoomModal()">×</button>
+  <div style="text-align: center; margin-top: 10px;">
+    <span style="font-family: var(--font-classic); font-size: 18px; color: #2a6fff; font-weight: 600;">音楽室</span><br><br>
+    <div id="musicRoomList"></div>
+    <br>
+    <button onclick="stopMusic()" style="padding: 5px 15px; border: 1px solid #ff7b7b; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer; color: #d93030; font-family: var(--font-main);">曲を止める</button>
   </div>
 </div>
 
@@ -604,7 +624,6 @@ const playerBirthdayLine = "今日はあなたの誕生日、でしょう？お�
 
 achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？", unlocked: false };
 
-
 // ===== 親密度・NGワード関連データ =====
 const lv1Greetings = {
   morning: "おはよう。今日は何時に起きたの？",
@@ -635,6 +654,17 @@ const lvMaxLinesMidnight = [
 const ngWords1 = ["マッヒー", "よっち", "ヨッチ", "果柱", "ルイベ", "爆発", "メモラビリア", "ビックス教団", "蒼い月", "残業", "徹夜", "落単", "留年", "神王", "グゴール"];
 const ngWords2 = ["ゼミつく", "ゼミつかー", "ナンチューズ", "ナンコーズ", "ナンダイズ", "セミつこ", "ゼンタイケイジバン", "サーベイ", "ZMTQ", "TGP", "とど恋", "吸戦", "星降る", "我天", "えどらー", "アンタイ", "シュウジ", "ヒロコ", "ゼータ", "古代勇者", "現代勇者", "魔王四天王", "壱ノ護王", "弐ノ護王", "參ノ護王", "肆ノ護王", "1号さん", "2号さん", "3号さん", "4号さん", "運営さん", "わんこぉ", "のぶにい", "エックス", "アクア", "にゃありい", "ばーぼん", "ふらっぺ", "フラッペ", "まつはる", "マツハル", "心結", "こころむすび", "アリス", "デコイ", "ルナ", "バネッサ", "妖精国", "ティルナノーグ", "氷河坑道連邦", "ツララブキ", "キーテジ", "獣の国", "ジェイルエデン", "世界樹図書館", "ユグドラシル", "ニライカナイ", "東の国", "ファドゥ", "吸血鬼城", "原初精霊", "ペレ", "ウンディーネ", "ケラウノス", "フレスヴェルグ", "ツゲノイナギ", "カリアッハ", "カーラクータ", "セフィロト", "カンボジアブロッコリー", "ムチグラアミーゴ", "ムエタイ", "僕らだけの世界", "僕らだけの夏", "僕らだけの未来", "僕らだけのミライ", "僕らだけの栄光", "僕らだけの鼓動", "ぼくらだけのよぞら", "僕らだけの夜空", "僕らだけの友情", "僕らだけの黎明", "僕らだけのキセキ", "繋がるセカイ", "星のキセキ"];
 
+// ===== 音楽関連データ =====
+let isPlayingMusic = false;
+let currentAudio = null;
+let unlockedSongs = JSON.parse(localStorage.getItem("unlockedSongs") || "[]");
+
+// ユーザー様が用意するファイル名（同じフォルダに置いてください）
+const musicData = {
+  song1: { title: "氷柱降る森の曲", file: "forest.mp3" },
+  song2: { title: "澄み渡る黎明の曲", file: "dawn.mp3" },
+  song3: { title: "思い出の夏の曲", file: "summer.mp3" }
+};
 
 // ===== ロジック・状態管理 =====
 let typing = false;
@@ -651,7 +681,6 @@ let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
 let currentRemIndex = 0;
 
-// 動的親密度のロード
 let dynamicAffinity = JSON.parse(localStorage.getItem("dynamicAffinity") || '{"points":0, "lastLoginDate":"", "consecutiveDays":0, "todayReminderCount":0, "lastReminderDate":""}');
 let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
 
@@ -661,7 +690,6 @@ function getTodayStr() {
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 }
 
-// 親密度の総合計算
 function getTotalAffinity() {
   let base = 0;
   for (let key in achievements) {
@@ -725,7 +753,6 @@ function getFaceImage(text) {
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
 
-  // NGワード反応用の表情判定
   if (text.endsWith("って言った？")) {
     if (text.startsWith("…")) return "fubuki_remember.png";
     else return "fubuki_puzzled.png";
@@ -778,7 +805,8 @@ function getFaceImage(text) {
     "ぼくらだけの…せかい……",
     "たんい…ほしい……",
     "すー…すー…(",
-    "すや……(寝かけているようだ)"
+    "すや……(寝かけているようだ)",
+    "(ピアノを弾いている…)"
   ];
   
   const puzzled = [
@@ -891,7 +919,11 @@ function initializeAchievements(targetSeen) {
     document.getElementById("editBirthdayBtn").style.display = "none";
   }
   
-  updateAffinityUI(); // 初期化時に親密度UIも更新
+  if (unlockedSongs.length > 0) {
+    document.getElementById("musicRoomBtn").style.display = "inline-block";
+  }
+
+  updateAffinityUI();
 }
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
@@ -946,7 +978,6 @@ function saveNewReminder() {
   });
   saveReminders();
   
-  // NGワード判定
   const sortedNG1 = [...ngWords1].sort((a,b) => b.length - a.length);
   const sortedNG2 = [...ngWords2].sort((a,b) => b.length - a.length);
   let found = false;
@@ -1103,7 +1134,7 @@ function dismissCurrentReminder() {
   rem.isDismissed = true;
   saveReminders();
   
-  onReminderDismissed(); // 親密度加算
+  onReminderDismissed();
   
   remDisplay.style.transform = "scale(0.8) translateY(100px)";
   remDisplay.style.opacity = "0";
@@ -1327,23 +1358,123 @@ function getZone(hour){
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
+// ===== 音楽再生関連 =====
+function openMusicSelectModal() {
+  const modal = document.getElementById("musicSelectModal");
+  document.getElementById("overlay").style.display = "block";
+  modal.style.display = "block";
+  setTimeout(() => {
+    document.getElementById("overlay").classList.add("show");
+    modal.classList.add("show");
+  }, 10);
+}
+
+function closeMusicSelectModal() {
+  const modal = document.getElementById("musicSelectModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+function playPianoEvent(songKey) {
+  closeMusicSelectModal();
+  
+  if (!unlockedSongs.includes(songKey)) {
+    unlockedSongs.push(songKey);
+    localStorage.setItem("unlockedSongs", JSON.stringify(unlockedSongs));
+    document.getElementById("musicRoomBtn").style.display = "inline-block";
+  }
+
+  showLine("(ピアノを弾いている…)", false, true);
+  isPlayingMusic = true;
+
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+
+  currentAudio = new Audio(musicData[songKey].file);
+  currentAudio.play().catch(e => {
+    alert("音声ファイルの再生に失敗しました。ファイル名を確認してください。");
+    isPlayingMusic = false;
+  });
+
+  currentAudio.onended = function() {
+    isPlayingMusic = false;
+  };
+}
+
+function openMusicRoomModal() {
+  const list = document.getElementById("musicRoomList");
+  list.innerHTML = "";
+  
+  unlockedSongs.forEach(key => {
+    const btn = document.createElement("button");
+    btn.textContent = musicData[key].title;
+    btn.className = "rem-input";
+    btn.style.marginBottom = "10px";
+    btn.style.cursor = "pointer";
+    btn.style.fontFamily = "var(--font-main)";
+    btn.onclick = () => playMusicRoom(key);
+    list.appendChild(btn);
+  });
+
+  const modal = document.getElementById("musicRoomModal");
+  document.getElementById("overlay").style.display = "block";
+  modal.style.display = "block";
+  setTimeout(() => {
+    document.getElementById("overlay").classList.add("show");
+    modal.classList.add("show");
+  }, 10);
+}
+
+function closeMusicRoomModal() {
+  const modal = document.getElementById("musicRoomModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+function playMusicRoom(songKey) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  currentAudio = new Audio(musicData[songKey].file);
+  currentAudio.play();
+}
+
+function stopMusic() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+}
+
+
 function speak(){
+  // 曲が再生中（深夜の演奏イベント中）はクリック無効
+  if (isPlayingMusic) return;
+
   updateBackground();
 
-  // 1. 誕生日イベントクリック待ち
   if (waitingForBirthdayClick) {
     waitingForBirthdayClick = false;
     openBirthdayModal();
     return;
   }
   
-  // 2. アチーブメント確定リワード表示
   if (pendingRewards.length > 0) {
     showLine(pendingRewards.shift(), true);
     return;
   }
 
-  // 3. NGワード反応の優先処理
   if (pendingNGReaction) {
     let line = "";
     if (pendingNGReaction.type === 1) {
@@ -1352,11 +1483,10 @@ function speak(){
       line = `…${pendingNGReaction.word}って言った？`;
     }
     pendingNGReaction = null;
-    showLine(line, false, true); // 履歴に乗せない
+    showLine(line, false, true);
     return;
   }
 
-  // 4. 親密度の確認とLv.1ログイン挨拶ボーナス
   checkLoginBonus();
   const totalAff = getTotalAffinity();
   const todayStr = getTodayStr();
@@ -1372,7 +1502,6 @@ function speak(){
   let line;
   let isRare = false;
 
-  // リマインダー用の特別な会話
   const pendingRems = allReminders.filter(r => !r.isDismissed);
   if (!isDebugMode && pendingRems.length > 0 && Math.random() < 0.15) {
     const randomRem = pick(pendingRems);
@@ -1381,7 +1510,6 @@ function speak(){
     return;
   }
 
-  // デバッグモードの強制指定
   if (isDebugMode) {
     const condition = document.getElementById("debugCondition").value;
     let pool = [];
@@ -1421,13 +1549,11 @@ function speak(){
   const zone = getZone(hour);
   const key = (now.getMonth()+1)+"-"+now.getDate();
 
-  // 季節イベントの処理
   if(eventLines[key] && Math.random()<0.3){
     showLine(pick(eventLines[key]), false);
     return;
   }
 
-  // 親密度によるレア出現率の変動（通常1%、Lv.2で3%、Lv.3以上で5%）
   let rareChance = 0.01;
   if (totalAff >= 1000) rareChance = 0.05;
   else if (totalAff >= 300) rareChance = 0.03;
@@ -1438,14 +1564,12 @@ function speak(){
     return;
   }
 
-  // Lv.MAX 専用セリフ抽選 (5%程度)
   if (totalAff >= 3000 && Math.random() < 0.05) {
      line = (zone==="midnight") ? pick(lvMaxLinesMidnight) : pick(lvMaxLinesNormal);
      showLine(line, false, true);
      return;
   }
 
-  // 通常セリフの抽選 (Lv.2以上の場合は候補を増やす)
   if(zone==="midnight"){
     line = pick(timeLines.midnight);
   } else {
@@ -1486,9 +1610,15 @@ function typeText(text, isDynamic = false) {
         waitingForBirthdayClick = true;
         document.getElementById("editBirthdayBtn").style.display = "inline-block";
       }
+      
+      // 音楽再生イベントの発火
+      if (text.includes("ちょっと弾いてあげるから早く寝なさいよ。何がいい？")) {
+        setTimeout(openMusicSelectModal, 500);
+      }
+
       if (!isDynamic) {
         checkAchievements();
-        updateAffinityUI(); // コンプリートにより親密度が上がる可能性があるためUIを更新
+        updateAffinityUI(); 
       }
     }
   }
@@ -1526,12 +1656,19 @@ function checkAchievements() {
 
 document.getElementById("overlay").onclick = function(e) {
   if (e.target.id === "overlay") {
+    // 音楽選択中は閉じさせない
+    if (document.getElementById("musicSelectModal").classList.contains("show")) {
+      return; 
+    }
+    
     if (document.getElementById("passwordModal").classList.contains("show")) {
       closePasswordModal();
     } else if (document.getElementById("birthdayModal").classList.contains("show")) {
       closeBirthdayModal();
     } else if (document.getElementById("reminderCreateModal").classList.contains("show")) {
       closeReminderCreateModal();
+    } else if (document.getElementById("musicRoomModal").classList.contains("show")) {
+      closeMusicRoomModal();
     } else {
       toggleLog();
     }
