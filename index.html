@@ -40,7 +40,6 @@ body {
   position: relative;
 }
 
-/* --- 背景のグラデーション --- */
 body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
 body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
 body.bg-noon2    { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); }
@@ -48,7 +47,6 @@ body.bg-evening  { background: linear-gradient(135deg, #0b1a3d 0%, #4b1c5a 40%, 
 body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
 body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
 
-/* --- 星空レイヤー --- */
 .star-field {
   position: fixed;
   top: 0;
@@ -196,7 +194,6 @@ body.bg-midnight .star-field::after {
   text-align: center;
 }
 
-/* 親密度UI変化 (Lv.3 と Lv.MAX) */
 body.affinity-lv3 .log, body.affinity-lv3 .container, body.affinity-lv3 .reminder-display {
   border-color: rgba(100, 200, 255, 0.8);
   box-shadow: 0 0 15px rgba(100, 200, 255, 0.5);
@@ -658,8 +655,8 @@ const ngWords2 = ["ゼミつく", "ゼミつかー", "ナンチューズ", "ナ�
 let isPlayingMusic = false;
 let currentAudio = null;
 let unlockedSongs = JSON.parse(localStorage.getItem("unlockedSongs") || "[]");
+let debugUnlockedSongs = [];
 
-// ユーザー様が用意するファイル名（同じフォルダに置いてください）
 const musicData = {
   song1: { title: "氷柱降る森の曲", file: "forest.mp3" },
   song2: { title: "澄み渡る黎明の曲", file: "dawn.mp3" },
@@ -676,6 +673,7 @@ const debugPassword = "fubuki_214_kisaragi";
 
 let userBirthday = localStorage.getItem("userBirthday") || null;
 let waitingForBirthdayClick = false;
+let waitingForMusicClick = false;
 
 let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
@@ -689,6 +687,23 @@ function getTodayStr() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 }
+
+// ツゲノイナギの出勤時間管理
+let tsugeHour = parseInt(localStorage.getItem("tsugeHour"));
+let tsugeDate = localStorage.getItem("tsugeDate");
+let tsugeClickCount = 0;
+let tsugeLastClickTime = 0;
+
+function checkTsugeTime() {
+  const todayStr = getTodayStr();
+  if (tsugeDate !== todayStr || isNaN(tsugeHour)) {
+    tsugeHour = Math.floor(Math.random() * 24);
+    tsugeDate = todayStr;
+    localStorage.setItem("tsugeHour", tsugeHour);
+    localStorage.setItem("tsugeDate", tsugeDate);
+  }
+}
+checkTsugeTime();
 
 function getTotalAffinity() {
   let base = 0;
@@ -748,7 +763,6 @@ function onReminderDismissed() {
   }
 }
 
-// 表情差分判定関数 
 function getFaceImage(text) {
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
@@ -919,11 +933,14 @@ function initializeAchievements(targetSeen) {
     document.getElementById("editBirthdayBtn").style.display = "none";
   }
   
-  if (unlockedSongs.length > 0) {
+  const currentSongs = isDebugMode ? debugUnlockedSongs : unlockedSongs;
+  if (currentSongs.length > 0) {
     document.getElementById("musicRoomBtn").style.display = "inline-block";
+  } else {
+    document.getElementById("musicRoomBtn").style.display = "none";
   }
 
-  updateAffinityUI();
+  updateAffinityUI(); 
 }
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
@@ -1147,10 +1164,10 @@ function dismissCurrentReminder() {
 }
 
 setInterval(() => {
+  checkTsugeTime();
   checkActiveReminders();
   updateBackground();
 }, 10000);
-checkActiveReminders();
 
 function openBirthdayModal() {
   const mSel = document.getElementById("bdMonth");
@@ -1245,6 +1262,7 @@ function handleDebugToggle(checkbox) {
   } else {
     isDebugMode = false;
     debugSeen = [];
+    debugUnlockedSongs = []; 
     document.getElementById("debugMenu").style.display = "none";
     alert("デバッグモードを終了しました。履歴は通常モードに戻ります。");
     initializeAchievements(seen);
@@ -1267,6 +1285,7 @@ function checkPassword() {
   if (document.getElementById("debugPassword").value === debugPassword) {
     isDebugMode = true;
     debugSeen = []; 
+    debugUnlockedSongs = [];
     initializeAchievements(debugSeen);
     document.getElementById("debugToggle").checked = true;
     document.getElementById("debugPassword").value = "";
@@ -1382,10 +1401,17 @@ function closeMusicSelectModal() {
 function playPianoEvent(songKey) {
   closeMusicSelectModal();
   
-  if (!unlockedSongs.includes(songKey)) {
-    unlockedSongs.push(songKey);
-    localStorage.setItem("unlockedSongs", JSON.stringify(unlockedSongs));
-    document.getElementById("musicRoomBtn").style.display = "inline-block";
+  if (isDebugMode) {
+    if (!debugUnlockedSongs.includes(songKey)) {
+      debugUnlockedSongs.push(songKey);
+      document.getElementById("musicRoomBtn").style.display = "inline-block";
+    }
+  } else {
+    if (!unlockedSongs.includes(songKey)) {
+      unlockedSongs.push(songKey);
+      localStorage.setItem("unlockedSongs", JSON.stringify(unlockedSongs));
+      document.getElementById("musicRoomBtn").style.display = "inline-block";
+    }
   }
 
   showLine("(ピアノを弾いている…)", false, true);
@@ -1411,7 +1437,8 @@ function openMusicRoomModal() {
   const list = document.getElementById("musicRoomList");
   list.innerHTML = "";
   
-  unlockedSongs.forEach(key => {
+  const currentSongs = isDebugMode ? debugUnlockedSongs : unlockedSongs;
+  currentSongs.forEach(key => {
     const btn = document.createElement("button");
     btn.textContent = musicData[key].title;
     btn.className = "rem-input";
@@ -1459,7 +1486,6 @@ function stopMusic() {
 
 
 function speak(){
-  // 曲が再生中（深夜の演奏イベント中）はクリック無効
   if (isPlayingMusic) return;
 
   updateBackground();
@@ -1467,6 +1493,60 @@ function speak(){
   if (waitingForBirthdayClick) {
     waitingForBirthdayClick = false;
     openBirthdayModal();
+    return;
+  }
+
+  if (waitingForMusicClick) {
+    waitingForMusicClick = false;
+    openMusicSelectModal();
+    return;
+  }
+  
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  if (!isDebugMode && currentHour === tsugeHour) {
+    pendingNGReaction = null;
+    checkLoginBonus(); 
+    
+    const nowTime = Date.now();
+    if (nowTime - tsugeLastClickTime > 60000) {
+      tsugeClickCount = 0;
+    }
+    tsugeLastClickTime = nowTime;
+
+    const pendingRems = allReminders.filter(r => !r.isDismissed);
+    if (pendingRems.length > 0 && Math.random() < 0.15) {
+      const randomRem = pick(pendingRems);
+      const line = `…${randomRem.title}、早くやれよ`;
+      showLine(line, false, true, "tsuge.png");
+      return;
+    }
+
+    const nextHour = (tsugeHour + 1) % 24;
+    const tsugeLines = [
+      "フブキなら今席を外している",
+      "そんなに遠くには行ってないはずだ",
+      `${nextHour}時には帰ってくるんじゃないか？`,
+      "……",
+      "暇なのかニンゲン",
+      "話題などないぞ",
+      "…そういえば昨日、…　…何も思いつかない",
+      "………",
+      "…己の成すべきことを成せ",
+      "…もう喋らないからな"
+    ];
+    
+    let line = "";
+    if (tsugeClickCount < tsugeLines.length) {
+      line = tsugeLines[tsugeClickCount];
+    } else {
+      const loopIdx = (tsugeClickCount - 7) % 3 + 7;
+      line = tsugeLines[loopIdx];
+    }
+    tsugeClickCount++;
+    
+    showLine(line, false, true, "tsuge.png");
     return;
   }
   
@@ -1494,7 +1574,7 @@ function speak(){
   if (totalAff >= 50 && todayGreetedDate !== todayStr && !isDebugMode) {
     todayGreetedDate = todayStr;
     localStorage.setItem("todayGreetedDate", todayGreetedDate);
-    const zone = getZone(new Date().getHours());
+    const zone = getZone(currentHour);
     showLine(lv1Greetings[zone], false, true); 
     return;
   }
@@ -1544,9 +1624,7 @@ function speak(){
     return;
   }
 
-  const now = new Date();
-  const hour = now.getHours();
-  const zone = getZone(hour);
+  const zone = getZone(currentHour);
   const key = (now.getMonth()+1)+"-"+now.getDate();
 
   if(eventLines[key] && Math.random()<0.3){
@@ -1582,12 +1660,16 @@ function speak(){
   showLine(line, false);
 }
 
-function showLine(text, isRare, isDynamic = false){
+function showLine(text, isRare, isDynamic = false, forcedImage = null){
   if (!isDynamic) saveSeen(text);
   const el = document.getElementById("speech");
   el.style.color = isRare ? "#2a6fff" : "#333";
   
-  document.getElementById("img").src = getFaceImage(text);
+  if (forcedImage) {
+    document.getElementById("img").src = forcedImage;
+  } else {
+    document.getElementById("img").src = getFaceImage(text);
+  }
   
   typeText(text, isDynamic);
 }
@@ -1611,9 +1693,8 @@ function typeText(text, isDynamic = false) {
         document.getElementById("editBirthdayBtn").style.display = "inline-block";
       }
       
-      // 音楽再生イベントの発火
       if (text.includes("ちょっと弾いてあげるから早く寝なさいよ。何がいい？")) {
-        setTimeout(openMusicSelectModal, 500);
+        waitingForMusicClick = true;
       }
 
       if (!isDynamic) {
@@ -1656,7 +1737,6 @@ function checkAchievements() {
 
 document.getElementById("overlay").onclick = function(e) {
   if (e.target.id === "overlay") {
-    // 音楽選択中は閉じさせない
     if (document.getElementById("musicSelectModal").classList.contains("show")) {
       return; 
     }
