@@ -12,7 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-/* フォントの設定 */
 :root {
   --font-main: 'Noto Sans JP', sans-serif;
   --font-classic: 'Klee One', serif;
@@ -44,7 +43,7 @@ body {
 /* --- 背景のグラデーション --- */
 body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
 body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
-body.bg-noon2    { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); } /* 青空に修正 */
+body.bg-noon2    { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); }
 body.bg-evening  { background: linear-gradient(135deg, #0b1a3d 0%, #4b1c5a 40%, #ff7e5f 100%); }
 body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
 body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
@@ -84,7 +83,6 @@ body.bg-midnight .star-field::after {
   background-position: 150px 150px, 70px 110px;
 }
 
-/* 消失バグ対策 */
 .menu, .reminder-menu, .debug-toggle-container, .debug-menu {
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
@@ -108,7 +106,6 @@ body.bg-midnight .star-field::after {
   z-index: 10;
 }
 
-/* ボタン (Klee One適用) */
 .menu button, .reminder-menu button {
   padding: 8px 14px;
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -127,7 +124,6 @@ body.bg-midnight .star-field::after {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* モーダル */
 .log {
   display: none;
   position: fixed;
@@ -150,7 +146,7 @@ body.bg-midnight .star-field::after {
 
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   opacity: 0;
-  transition: 0.2s;
+  transition: all 0.5s ease;
   z-index: 100;
 }
 
@@ -195,11 +191,22 @@ body.bg-midnight .star-field::after {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.5s ease;
 
   text-align: center;
 }
 
-/* タイトル (Klee One適用、時間帯で色が切り替わる) */
+/* 親密度UI変化 (Lv.3 と Lv.MAX) */
+body.affinity-lv3 .log, body.affinity-lv3 .container, body.affinity-lv3 .reminder-display {
+  border-color: rgba(100, 200, 255, 0.8);
+  box-shadow: 0 0 15px rgba(100, 200, 255, 0.5);
+}
+
+body.affinity-max .log, body.affinity-max .container, body.affinity-max .reminder-display {
+  border-color: rgba(220, 230, 240, 0.9);
+  box-shadow: 0 0 25px rgba(220, 230, 240, 0.7);
+}
+
 .title {
   font-family: var(--font-classic);
   font-size: 22px;
@@ -224,7 +231,6 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
 }
 
-/* 吹き出し (通常のフォント) */
 .speech {
   position: absolute;
   bottom: -35px;
@@ -296,7 +302,6 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
   transform: scale(1.2);
 }
 
-/* デバッグモードのトグル (Klee One適用) */
 .debug-toggle-container {
   position: fixed;
   bottom: 20px;
@@ -350,7 +355,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .bd-select { padding: 4px; border: 1px solid #7fbce0; border-radius: 4px; font-size: 14px; }
 
-/* リマインダー表示UI */
 .reminder-display {
   width: 320px;
   padding: 12px 16px;
@@ -369,6 +373,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   user-select: none;
   cursor: grab;
   color: #333;
+  transition: all 0.5s ease;
 }
 
 .reminder-display:active { cursor: grabbing; }
@@ -573,7 +578,7 @@ midnight: [
 
 const eventLines = {
 "1-1": ["あけましておめでとう。今年も良い一年にしましょうね"],
-"1-12": ["今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…"],
+"1-12": ["今日は…あの人の誕生日ね。　…お団子食べたくなってきた"],
 "4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ"],
 "5-17": ["今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…"],
 "8-5": ["…今日はあの場所の……何周年なんだ…？"],
@@ -599,9 +604,42 @@ const playerBirthdayLine = "今日はあなたの誕生日、でしょう？お�
 
 achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？", unlocked: false };
 
+
+// ===== 親密度・NGワード関連データ =====
+const lv1Greetings = {
+  morning: "おはよう。今日は何時に起きたの？",
+  noon1: "なんだか最近よく顔を見ている気がするわね",
+  noon2: "あ、来たわね。今日もお疲れ様",
+  evening: "一日が終わるのはあっという間よね…",
+  night: "ごはんは何食べたの？",
+  midnight: "まーた遅くまで起きて……"
+};
+
+const lv2NormalLines = [
+  "あなたは趣味とかある？　私はね、今は魔法かな",
+  "どうして昨日から書類の量が減ってないんだろう…",
+  "古代の書物が出た？　…どうせアレかアレだろうな…",
+  "すや……(寝かけているようだ)"
+];
+
+const lvMaxLinesNormal = [
+  "全っ然終わらん…",
+  "今日もうサボっちゃおっかな…"
+];
+
+const lvMaxLinesMidnight = [
+  "寝たら朝が来る……",
+  "深夜の甘味は最高だね～…　ハッ！いつから見てたの！？"
+];
+
+const ngWords1 = ["マッヒー", "よっち", "ヨッチ", "果柱", "ルイベ", "爆発", "メモラビリア", "ビックス教団", "蒼い月", "残業", "徹夜", "落単", "留年", "神王", "グゴール"];
+const ngWords2 = ["ゼミつく", "ゼミつかー", "ナンチューズ", "ナンコーズ", "ナンダイズ", "セミつこ", "ゼンタイケイジバン", "サーベイ", "ZMTQ", "TGP", "とど恋", "吸戦", "星降る", "我天", "えどらー", "アンタイ", "シュウジ", "ヒロコ", "ゼータ", "古代勇者", "現代勇者", "魔王四天王", "壱ノ護王", "弐ノ護王", "參ノ護王", "肆ノ護王", "1号さん", "2号さん", "3号さん", "4号さん", "運営さん", "わんこぉ", "のぶにい", "エックス", "アクア", "にゃありい", "ばーぼん", "ふらっぺ", "フラッペ", "まつはる", "マツハル", "心結", "こころむすび", "アリス", "デコイ", "ルナ", "バネッサ", "妖精国", "ティルナノーグ", "氷河坑道連邦", "ツララブキ", "キーテジ", "獣の国", "ジェイルエデン", "世界樹図書館", "ユグドラシル", "ニライカナイ", "東の国", "ファドゥ", "吸血鬼城", "原初精霊", "ペレ", "ウンディーネ", "ケラウノス", "フレスヴェルグ", "ツゲノイナギ", "カリアッハ", "カーラクータ", "セフィロト", "カンボジアブロッコリー", "ムチグラアミーゴ", "ムエタイ", "僕らだけの世界", "僕らだけの夏", "僕らだけの未来", "僕らだけのミライ", "僕らだけの栄光", "僕らだけの鼓動", "ぼくらだけのよぞら", "僕らだけの夜空", "僕らだけの友情", "僕らだけの黎明", "僕らだけのキセキ", "繋がるセカイ", "星のキセキ"];
+
+
 // ===== ロジック・状態管理 =====
 let typing = false;
 let pendingRewards = [];
+let pendingNGReaction = null;
 let isDebugMode = false;
 let debugSeen = [];
 const debugPassword = "fubuki_214_kisaragi"; 
@@ -613,9 +651,85 @@ let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 let activeReminders = [];
 let currentRemIndex = 0;
 
+// 動的親密度のロード
+let dynamicAffinity = JSON.parse(localStorage.getItem("dynamicAffinity") || '{"points":0, "lastLoginDate":"", "consecutiveDays":0, "todayReminderCount":0, "lastReminderDate":""}');
+let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
+
+
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
+// 親密度の総合計算
+function getTotalAffinity() {
+  let base = 0;
+  for (let key in achievements) {
+    if (key !== "all" && achievements[key].unlocked) base += 5;
+  }
+  const currentSeen = isDebugMode ? debugSeen : seen;
+  const rareAndSeasonal = [...rareLines.normal, ...rareLines.midnight, ...Object.values(eventLines).flat()];
+  rareAndSeasonal.forEach(text => {
+    if (currentSeen.includes(text)) base += 2;
+  });
+  return base + dynamicAffinity.points;
+}
+
+function updateAffinityUI() {
+  const total = getTotalAffinity();
+  document.body.classList.remove('affinity-lv3', 'affinity-max');
+  if (total >= 3000) {
+    document.body.classList.add('affinity-max');
+  } else if (total >= 1000) {
+    document.body.classList.add('affinity-lv3');
+  }
+}
+
+function checkLoginBonus() {
+  const today = getTodayStr();
+  if (dynamicAffinity.lastLoginDate !== today) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+
+    if (dynamicAffinity.lastLoginDate === yesterdayStr) {
+      dynamicAffinity.consecutiveDays++;
+    } else {
+      dynamicAffinity.consecutiveDays = 1;
+    }
+    
+    const addedPoints = Math.min(dynamicAffinity.consecutiveDays, 10);
+    dynamicAffinity.points += addedPoints;
+    dynamicAffinity.lastLoginDate = today;
+    localStorage.setItem("dynamicAffinity", JSON.stringify(dynamicAffinity));
+    updateAffinityUI();
+  }
+}
+
+function onReminderDismissed() {
+  const today = getTodayStr();
+  if (dynamicAffinity.lastReminderDate !== today) {
+    dynamicAffinity.todayReminderCount = 0;
+    dynamicAffinity.lastReminderDate = today;
+  }
+  if (dynamicAffinity.todayReminderCount < 3) {
+    dynamicAffinity.points += 1;
+    dynamicAffinity.todayReminderCount++;
+    localStorage.setItem("dynamicAffinity", JSON.stringify(dynamicAffinity));
+    updateAffinityUI();
+  }
+}
+
+// 表情差分判定関数 
 function getFaceImage(text) {
   if (text.includes("は大丈夫なの？")) return "fubuki_remember.png"; 
   if (text.includes("ね。覚えておくわ")) return "fubuki_smile.png";
+
+  // NGワード反応用の表情判定
+  if (text.endsWith("って言った？")) {
+    if (text.startsWith("…")) return "fubuki_remember.png";
+    else return "fubuki_puzzled.png";
+  }
 
   const smile = [
     "この仕事が終わったらお茶にしましょうか",
@@ -628,7 +742,9 @@ function getFaceImage(text) {
     "そろそろおやつにしましょうか。あなたも食べる？",
     "もっと私のことを知りたい？　…もう十分知ってるわよ",
     "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ",
-    "いらっしゃい、今日はどうしたの？"
+    "いらっしゃい、今日はどうしたの？",
+    "おはよう。今日は何時に起きたの？",
+    "あなたは趣味とかある？　私はね、今は魔法かな"
   ];
   
   const remember = [
@@ -642,12 +758,15 @@ function getFaceImage(text) {
     "もう少し暇だったらバネッサまで遊びに行くんだけど",
     "カップラーメン食べたいなぁ",
     "護王様ってあの身体でどうやって仕事してるんだろ",
-    "今日って確か3号さんの誕生日だよね？　…祝う手段はないけれど…",
+    "今日は…あの人の誕生日ね。　…お団子食べたくなってきた",
     "今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…",
     "…今日はあの場所の……何周年なんだ…？",
     "今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…",
     "いい匂い…　これはカンボジアブロッコリー…？",
-    "そういえば、あなたの誕生日っていつなの？"
+    "そういえば、あなたの誕生日っていつなの？",
+    "なんだか最近よく顔を見ている気がするわね",
+    "ごはんは何食べたの？",
+    "どうして昨日から書類の量が減ってないんだろう…"
   ];
   
   const sleep = [
@@ -658,7 +777,8 @@ function getFaceImage(text) {
     "うぐ…うーん……(いつかの戦い",
     "ぼくらだけの…せかい……",
     "たんい…ほしい……",
-    "すー…すー…("
+    "すー…すー…(",
+    "すや……(寝かけているようだ)"
   ];
   
   const puzzled = [
@@ -677,7 +797,13 @@ function getFaceImage(text) {
     "炎の魔力と轟音……　またやったわねマッヒー…",
     "まだ起きてるの？　…仕方ないわね",
     "私と喋ってないで、やることやりなさいよ",
-    "21時就寝は早い？千年前の私に言ってちょうだい"
+    "21時就寝は早い？千年前の私に言ってちょうだい",
+    "一日が終わるのはあっという間よね…",
+    "まーた遅くまで起きて……",
+    "古代の書物が出た？　…どうせアレかアレだろうな…",
+    "全っ然終わらん…",
+    "寝たら朝が来る……",
+    "深夜の甘味は最高だね～…　ハッ！いつから見てたの！？"
   ];
 
   if (smile.some(s => text.includes(s))) return "fubuki_smile.png";
@@ -700,7 +826,6 @@ function updateBackground() {
       targetZone = condition;
     }
   }
-  
   document.body.className = "bg-" + targetZone;
 }
 
@@ -765,6 +890,8 @@ function initializeAchievements(targetSeen) {
   } else {
     document.getElementById("editBirthdayBtn").style.display = "none";
   }
+  
+  updateAffinityUI(); // 初期化時に親密度UIも更新
 }
 
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
@@ -818,6 +945,25 @@ function saveNewReminder() {
     isDismissed: false
   });
   saveReminders();
+  
+  // NGワード判定
+  const sortedNG1 = [...ngWords1].sort((a,b) => b.length - a.length);
+  const sortedNG2 = [...ngWords2].sort((a,b) => b.length - a.length);
+  let found = false;
+  for (let w of sortedNG1) {
+    if (title.includes(w)) {
+      pendingNGReaction = { word: w, type: 1 };
+      found = true; break;
+    }
+  }
+  if (!found) {
+    for (let w of sortedNG2) {
+      if (title.includes(w)) {
+        pendingNGReaction = { word: w, type: 2 };
+        break;
+      }
+    }
+  }
 
   document.getElementById("remTitleInput").value = "";
   closeReminderCreateModal();
@@ -944,7 +1090,6 @@ function cycleReminder(dir) {
 
     remDisplay.style.transition = "none";
     remDisplay.style.transform = `translateX(${enterX}px)`;
-
     void remDisplay.offsetWidth;
 
     remDisplay.style.transition = "transform 0.3s ease, opacity 0.3s ease";
@@ -957,6 +1102,8 @@ function dismissCurrentReminder() {
   const rem = activeReminders[currentRemIndex];
   rem.isDismissed = true;
   saveReminders();
+  
+  onReminderDismissed(); // 親密度加算
   
   remDisplay.style.transform = "scale(0.8) translateY(100px)";
   remDisplay.style.opacity = "0";
@@ -1071,6 +1218,7 @@ function handleDebugToggle(checkbox) {
     alert("デバッグモードを終了しました。履歴は通常モードに戻ります。");
     initializeAchievements(seen);
     updateBackground();
+    updateAffinityUI();
   }
 }
 
@@ -1094,6 +1242,7 @@ function checkPassword() {
     document.getElementById("debugMenu").style.display = "flex";
     closePasswordModal();
     updateBackground();
+    updateAffinityUI();
     alert("デバッグモードを開始しました。");
   } else {
     alert("パスワードが違います。");
@@ -1104,7 +1253,10 @@ function resetNormalHistory() {
   if (confirm("通常モードの履歴を完全に削除します。よろしいですか？")) {
     localStorage.removeItem("seen");
     seen = [];
-    if (!isDebugMode) initializeAchievements(seen);
+    if (!isDebugMode) {
+      initializeAchievements(seen);
+      updateAffinityUI();
+    }
     alert("通常モードの履歴をリセットしました。");
   }
 }
@@ -1178,19 +1330,49 @@ function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function speak(){
   updateBackground();
 
+  // 1. 誕生日イベントクリック待ち
   if (waitingForBirthdayClick) {
     waitingForBirthdayClick = false;
     openBirthdayModal();
     return;
   }
+  
+  // 2. アチーブメント確定リワード表示
   if (pendingRewards.length > 0) {
     showLine(pendingRewards.shift(), true);
+    return;
+  }
+
+  // 3. NGワード反応の優先処理
+  if (pendingNGReaction) {
+    let line = "";
+    if (pendingNGReaction.type === 1) {
+      line = `${pendingNGReaction.word}って言った？`; 
+    } else {
+      line = `…${pendingNGReaction.word}って言った？`;
+    }
+    pendingNGReaction = null;
+    showLine(line, false, true); // 履歴に乗せない
+    return;
+  }
+
+  // 4. 親密度の確認とLv.1ログイン挨拶ボーナス
+  checkLoginBonus();
+  const totalAff = getTotalAffinity();
+  const todayStr = getTodayStr();
+
+  if (totalAff >= 50 && todayGreetedDate !== todayStr && !isDebugMode) {
+    todayGreetedDate = todayStr;
+    localStorage.setItem("todayGreetedDate", todayGreetedDate);
+    const zone = getZone(new Date().getHours());
+    showLine(lv1Greetings[zone], false, true); 
     return;
   }
 
   let line;
   let isRare = false;
 
+  // リマインダー用の特別な会話
   const pendingRems = allReminders.filter(r => !r.isDismissed);
   if (!isDebugMode && pendingRems.length > 0 && Math.random() < 0.15) {
     const randomRem = pick(pendingRems);
@@ -1199,6 +1381,7 @@ function speak(){
     return;
   }
 
+  // デバッグモードの強制指定
   if (isDebugMode) {
     const condition = document.getElementById("debugCondition").value;
     let pool = [];
@@ -1238,21 +1421,39 @@ function speak(){
   const zone = getZone(hour);
   const key = (now.getMonth()+1)+"-"+now.getDate();
 
+  // 季節イベントの処理
   if(eventLines[key] && Math.random()<0.3){
     showLine(pick(eventLines[key]), false);
     return;
   }
 
-  if(Math.random()<0.01){
+  // 親密度によるレア出現率の変動（通常1%、Lv.2で3%、Lv.3以上で5%）
+  let rareChance = 0.01;
+  if (totalAff >= 1000) rareChance = 0.05;
+  else if (totalAff >= 300) rareChance = 0.03;
+
+  if(Math.random() < rareChance){
     line = (zone==="midnight") ? pick(rareLines.midnight) : pick(rareLines.normal);
     showLine(line, true);
     return;
   }
 
+  // Lv.MAX 専用セリフ抽選 (5%程度)
+  if (totalAff >= 3000 && Math.random() < 0.05) {
+     line = (zone==="midnight") ? pick(lvMaxLinesMidnight) : pick(lvMaxLinesNormal);
+     showLine(line, false, true);
+     return;
+  }
+
+  // 通常セリフの抽選 (Lv.2以上の場合は候補を増やす)
   if(zone==="midnight"){
     line = pick(timeLines.midnight);
   } else {
-    line = Math.random()<0.6 ? pick(timeLines[zone]) : pick(normalLines);
+    let currentNormal = [...normalLines];
+    if (totalAff >= 300) {
+      currentNormal = currentNormal.concat(lv2NormalLines);
+    }
+    line = Math.random()<0.6 ? pick(timeLines[zone]) : pick(currentNormal);
   }
   showLine(line, false);
 }
@@ -1285,7 +1486,10 @@ function typeText(text, isDynamic = false) {
         waitingForBirthdayClick = true;
         document.getElementById("editBirthdayBtn").style.display = "inline-block";
       }
-      if (!isDynamic) checkAchievements();
+      if (!isDynamic) {
+        checkAchievements();
+        updateAffinityUI(); // コンプリートにより親密度が上がる可能性があるためUIを更新
+      }
     }
   }
   step();
