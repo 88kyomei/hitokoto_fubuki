@@ -40,6 +40,7 @@ body {
   position: relative;
 }
 
+/* --- 背景のグラデーション --- */
 body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
 body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
 body.bg-noon2    { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); }
@@ -47,6 +48,7 @@ body.bg-evening  { background: linear-gradient(135deg, #0b1a3d 0%, #4b1c5a 40%, 
 body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
 body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
 
+/* --- 星空レイヤー --- */
 .star-field {
   position: fixed;
   top: 0;
@@ -226,6 +228,7 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
 .character {
   width: 260px;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+  transition: opacity 0.5s ease; /* フェードイン・フェードアウト用のアニメーションを追加 */
 }
 
 .speech {
@@ -682,6 +685,9 @@ let currentRemIndex = 0;
 let dynamicAffinity = JSON.parse(localStorage.getItem("dynamicAffinity") || '{"points":0, "lastLoginDate":"", "consecutiveDays":0, "todayReminderCount":0, "lastReminderDate":""}');
 let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
 
+// 画面に現在表示されるべきキャラクターの状態管理
+let currentDisplayedCharacter = "fubuki";
+
 
 function getTodayStr() {
   const now = new Date();
@@ -871,6 +877,44 @@ function updateBackground() {
   document.body.className = "bg-" + targetZone;
 }
 
+// 留守番状態の監視と自動フェード切り替え
+function updateCharacterPresence() {
+  if (isDebugMode) return;
+  const now = new Date();
+  const currentHour = now.getHours();
+  const imgEl = document.getElementById("img");
+  const speechEl = document.getElementById("speech");
+
+  if (currentHour === tsugeHour) {
+    if (currentDisplayedCharacter !== "tsuge") {
+      currentDisplayedCharacter = "tsuge";
+      imgEl.style.opacity = 0; 
+      setTimeout(() => {
+        imgEl.src = "tsuge.png";
+        imgEl.style.opacity = 1;
+        if (!typing) {
+          speechEl.textContent = "（フブキは席を外したようだ…）";
+          speechEl.style.color = "#333";
+        }
+      }, 300);
+    }
+  } else {
+    if (currentDisplayedCharacter === "tsuge") {
+      currentDisplayedCharacter = "fubuki";
+      imgEl.style.opacity = 0;
+      setTimeout(() => {
+        imgEl.src = "fubuki.png"; 
+        imgEl.style.opacity = 1;
+        if (!typing) {
+          speechEl.textContent = "（フブキが戻ってきたようだ）";
+          speechEl.style.color = "#333";
+        }
+        tsugeClickCount = 0; 
+      }, 300);
+    }
+  }
+}
+
 function addRewardToPool(key, reward) {
   if (timeLines[key] && !timeLines[key].includes(reward)) {
     timeLines[key].push(reward);
@@ -946,6 +990,14 @@ function initializeAchievements(targetSeen) {
 let seen = JSON.parse(localStorage.getItem("seen") || "[]");
 initializeAchievements(seen);
 updateBackground();
+
+// ロード時にもツゲの時間かどうかをチェックして初期表示を合わせる
+const initialHour = new Date().getHours();
+if (!isDebugMode && initialHour === tsugeHour) {
+  currentDisplayedCharacter = "tsuge";
+  document.getElementById("img").src = "tsuge.png";
+  document.getElementById("speech").textContent = "（ツゲが留守番している…）";
+}
 
 function saveReminders() {
   localStorage.setItem("reminders", JSON.stringify(allReminders));
@@ -1163,10 +1215,12 @@ function dismissCurrentReminder() {
   }, 300);
 }
 
+// 10秒ごとの定期チェック（ツゲの時間もここで判定）
 setInterval(() => {
   checkTsugeTime();
   checkActiveReminders();
   updateBackground();
+  updateCharacterPresence();
 }, 10000);
 
 function openBirthdayModal() {
@@ -1268,6 +1322,7 @@ function handleDebugToggle(checkbox) {
     initializeAchievements(seen);
     updateBackground();
     updateAffinityUI();
+    updateCharacterPresence();
   }
 }
 
@@ -1293,6 +1348,7 @@ function checkPassword() {
     closePasswordModal();
     updateBackground();
     updateAffinityUI();
+    updateCharacterPresence();
     alert("デバッグモードを開始しました。");
   } else {
     alert("パスワードが違います。");
@@ -1667,8 +1723,10 @@ function showLine(text, isRare, isDynamic = false, forcedImage = null){
   
   if (forcedImage) {
     document.getElementById("img").src = forcedImage;
+    currentDisplayedCharacter = "tsuge";
   } else {
     document.getElementById("img").src = getFaceImage(text);
+    currentDisplayedCharacter = "fubuki";
   }
   
   typeText(text, isDynamic);
