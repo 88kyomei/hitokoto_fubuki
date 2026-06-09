@@ -106,7 +106,11 @@ body.bg-midnight .star-field::after {
   z-index: 10;
 }
 
-.menu button, .reminder-menu button {
+.main-menu-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
   padding: 8px 14px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.5);
@@ -120,8 +124,24 @@ body.bg-midnight .star-field::after {
   font-weight: 600;
   font-size: 15px;
 }
-.menu button:hover, .reminder-menu button:hover {
+
+.main-menu-btn:hover, .menu button:hover, .reminder-menu button:hover {
   background: rgba(255, 255, 255, 0.8);
+}
+
+.menu button, .reminder-menu button {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #333;
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .log {
@@ -228,7 +248,7 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
 .character {
   width: 260px;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-  transition: opacity 0.5s ease; /* フェードイン・フェードアウト用のアニメーションを追加 */
+  transition: opacity 0.5s ease;
 }
 
 .speech {
@@ -410,9 +430,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 <div class="menu">
   <button onclick="toggleLog()">セリフ一覧</button>
-  <button id="editBirthdayBtn" onclick="openBirthdayModal()" style="display: none;">誕生日設定</button>
-  <button id="musicRoomBtn" onclick="openMusicRoomModal()" style="display: none;">音楽室</button>
 </div>
+
+<button class="main-menu-btn" onclick="openMainMenu()">メニュー</button>
 
 <div class="reminder-menu">
   <button onclick="openReminderCreateModal()">リマインダーを作成</button>
@@ -456,6 +476,36 @@ input:checked + .slider:before { transform: translateX(20px); }
     パスワードを入力してください<br>
     <input type="password" id="debugPassword" style="margin: 15px 0; padding: 5px; width: 80%; border: 1px solid #7fbce0; border-radius: 4px;"><br>
     <button onclick="checkPassword()" style="padding: 5px 15px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">認証</button>
+  </div>
+</div>
+
+<div id="mainMenuModal" class="log">
+  <button class="closeBtn" onclick="closeMainMenu()">×</button>
+  <div style="text-align: center; margin-top: 15px;">
+    <span style="font-family: var(--font-classic); font-size: 18px; color: #2a6fff; font-weight: 600;">メニュー</span><br><br>
+    
+    <button id="musicRoomBtn" onclick="switchModalFromMenu(openMusicRoomModal)" class="rem-input" style="display: none; margin: 0 auto 15px auto; cursor: pointer; background: rgba(255,255,255,0.8); border: 1px solid #7fbce0;">音楽室</button>
+    
+    <button id="editBirthdayBtn" onclick="switchModalFromMenu(openBirthdayModal)" class="rem-input" style="display: none; margin: 0 auto 15px auto; cursor: pointer; background: rgba(255,255,255,0.8); border: 1px solid #7fbce0;">誕生日設定</button>
+    
+    <button onclick="switchModalFromMenu(openDataModal)" class="rem-input" style="display: block; margin: 0 auto 15px auto; cursor: pointer; background: rgba(255,255,255,0.8); border: 1px solid #7fbce0;">データ引き継ぎ</button>
+  </div>
+</div>
+
+<div id="dataModal" class="log">
+  <button class="closeBtn" onclick="closeDataModal()">×</button>
+  <div style="text-align: center; margin-top: 15px;">
+    <span style="font-family: var(--font-classic); font-size: 18px; color: #2a6fff; font-weight: 600;">データ引き継ぎ</span><br><br>
+    <div style="font-size: 12px; color: #555; text-align: left; margin-bottom: 20px; line-height: 1.5; padding: 0 10px;">
+      現在の親密度や図鑑のデータをファイルとして保存（エクスポート）したり、新しい端末で読み込んで（インポート）データを引き継ぐことができます。<br><br>
+      <span style="color: #d93030; font-weight: bold;">※インポートすると、現在の端末のデータは上書きされます。</span>
+    </div>
+    
+    <button onclick="exportData()" class="rem-input" style="display: block; margin: 0 auto 15px auto; cursor: pointer; border-color: #2a6fff; background: rgba(42, 111, 255, 0.05); color: #2a6fff; font-weight: bold;">データを保存する<br><span style="font-size:10px; font-weight:normal;">(エクスポート)</span></button>
+    
+    <button onclick="document.getElementById('importFile').click()" class="rem-input" style="display: block; margin: 0 auto 10px auto; cursor: pointer; border-color: #ff7b7b; background: rgba(255, 123, 123, 0.05); color: #d93030; font-weight: bold;">データを読み込む<br><span style="font-size:10px; font-weight:normal;">(インポート)</span></button>
+    
+    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
   </div>
 </div>
 
@@ -537,7 +587,7 @@ const normalLines = [
 const timeLines = {
 morning: [
 "おはよう、今日もいい朝ね",
-"太陽の光を浴びると目が覚めるらしいわね　　…ここは日光が届かないけど…",
+"太陽の光を浴びると目が覚めるらしいわね  …ここは日光が届かないけど…",
 "忘れ物はない？",
 "遅刻しないようにね",
 "ツゲ起きて、朝ごはんよ"
@@ -553,7 +603,7 @@ noon2: [
 "ちょっと眠いわね…",
 "今日のおやつは何にしようかしら",
 "午後もわりと仕事あるわね…",
-"ツゲぴょん、これ手伝って～…　痛い痛い！ごめんって！",
+"ツゲぴょん、これ手伝って～… 痛い痛い！ごめんって！",
 "(ペンを持つと絵が描きたくなる…)"
 ],
 evening: [
@@ -581,7 +631,7 @@ midnight: [
 
 const rareLines = {
 normal: [
-"炎の魔力と轟音……　またやったわねマッヒー…",
+"炎の魔力と轟音…… またやったわねマッヒー…",
 "もう少し暇だったらバネッサまで遊びに行くんだけど",
 "…みんな何してるかなぁ",
 "カップラーメン食べたいなぁ",
@@ -592,19 +642,19 @@ midnight: [
 "うぐ…うーん……(いつかの戦いの夢を見ているようだ)",
 "ぼくらだけの…せかい……(いつかの居場所の夢を見ているようだ)",
 "たんい…ほしい……(いつかの学び舎の夢を見ているようだ)",
-"まだ起きてるの？　…仕方ないわね、ちょっと弾いてあげるから早く寝なさいよ。何がいい？"
+"まだ起きてるの？ …仕方ないわね、ちょっと弾いてあげるから早く寝なさいよ。何がいい？"
 ]
 };
 
 const eventLines = {
 "1-1": ["あけましておめでとう。今年も良い一年にしましょうね"],
-"1-12": ["今日は…あの人の誕生日ね。　…お団子食べたくなってきた"],
-"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。　…当然嘘よ"],
-"5-17": ["今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…"],
+"1-12": ["今日は…あの人の誕生日ね。 …お団子食べたくなってきた"],
+"4-1": ["今日から私、ニライカナイに引っ越すことにしたの。 …当然嘘よ"],
+"5-17": ["今日は誕生日ね、ケーキでも食べようかしら。 …いや、この世界での誕生日は知らないけど…"],
 "8-5": ["…今日はあの場所の……何周年なんだ…？"],
-"10-31": ["トリックオアトリート！　冗談よ、お菓子いる？"],
-"12-25": ["今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…"],
-"12-31": ["今日は大晦日ね、充実した一年だった？　来年もよろしくね"]
+"10-31": ["トリックオアトリート！ 冗談よ、お菓子いる？"],
+"12-25": ["今日はクリスマス、プレゼントには時間がほしいわ。 …前の人生でもそんなこと言ってたような…"],
+"12-31": ["今日は大晦日ね、充実した一年だった？ 来年もよろしくね"]
 };
 
 const achievementLines = [];
@@ -613,10 +663,10 @@ const achievements = {
   morning: { lines: [...timeLines.morning], reward: "ふわぁ……まだ少し眠いわね", unlocked: false },
   noon1: { lines: [...timeLines.noon1], reward: "私と喋ってないで、やることやりなさいよ", unlocked: false },
   noon2: { lines: [...timeLines.noon2], reward: "そろそろおやつにしましょうか。あなたも食べる？", unlocked: false },
-  evening: { lines: [...timeLines.evening], reward: "いい匂い…　これはカンボジアブロッコリー…？", unlocked: false },
+  evening: { lines: [...timeLines.evening], reward: "いい匂い… これはカンボジアブロッコリー…？", unlocked: false },
   night: { lines: [...timeLines.night], reward: "21時就寝は早い？千年前の私に言ってちょうだい", unlocked: false },
   late: { lines: [...timeLines.midnight], reward: "すー…すー…(おいしいごはんの夢を見ているようだ)", unlocked: false },
-  rare: { lines: [...rareLines.normal], reward: "もっと私のことを知りたい？　…もう十分知ってるわよ", unlocked: false },
+  rare: { lines: [...rareLines.normal], reward: "もっと私のことを知りたい？ …もう十分知ってるわよ", unlocked: false },
   seasonal: { lines: [...Object.values(eventLines).flat()], reward: "そういえば、あなたの誕生日っていつなの？", unlocked: false }
 };
 
@@ -635,9 +685,9 @@ const lv1Greetings = {
 };
 
 const lv2NormalLines = [
-  "あなたは趣味とかある？　私はね、今は魔法かな",
+  "あなたは趣味とかある？ 私はね、今は魔法かな",
   "どうして昨日から書類の量が減ってないんだろう…",
-  "古代の書物が出た？　…どうせアレかアレだろうな…",
+  "古代の書物が出た？ …どうせアレかアレだろうな…",
   "すや……(寝かけているようだ)"
 ];
 
@@ -648,7 +698,7 @@ const lvMaxLinesNormal = [
 
 const lvMaxLinesMidnight = [
   "寝たら朝が来る……",
-  "深夜の甘味は最高だね～…　ハッ！いつから見てたの！？"
+  "深夜の甘味は最高だね～… ハッ！いつから見てたの！？"
 ];
 
 const ngWords1 = ["マッヒー", "よっち", "ヨッチ", "果柱", "ルイベ", "爆発", "メモラビリア", "ビックス教団", "蒼い月", "残業", "徹夜", "落単", "留年", "神王", "グゴール"];
@@ -685,16 +735,13 @@ let currentRemIndex = 0;
 let dynamicAffinity = JSON.parse(localStorage.getItem("dynamicAffinity") || '{"points":0, "lastLoginDate":"", "consecutiveDays":0, "todayReminderCount":0, "lastReminderDate":""}');
 let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
 
-// 画面に現在表示されるべきキャラクターの状態管理
 let currentDisplayedCharacter = "fubuki";
-
 
 function getTodayStr() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 }
 
-// ツゲノイナギの出勤時間管理
 let tsugeHour = parseInt(localStorage.getItem("tsugeHour"));
 let tsugeDate = localStorage.getItem("tsugeDate");
 let tsugeClickCount = 0;
@@ -784,14 +831,14 @@ function getFaceImage(text) {
     "今日も一日、お疲れ様",
     "…みんな何してるかなぁ",
     "あけましておめでとう。今年も良い一年にしましょうね",
-    "トリックオアトリート！　冗談よ、お菓子いる？",
-    "今日は大晦日ね、充実した一年だった？　来年もよろしくね",
+    "トリックオアトリート！ 冗談よ、お菓子いる？",
+    "今日は大晦日ね、充実した一年だった？ 来年もよろしくね",
     "そろそろおやつにしましょうか。あなたも食べる？",
-    "もっと私のことを知りたい？　…もう十分知ってるわよ",
+    "もっと私のことを知りたい？ …もう十分知ってるわよ",
     "今日はあなたの誕生日、でしょう？おめでとう。いい一年にするのよ",
     "いらっしゃい、今日はどうしたの？",
     "おはよう。今日は何時に起きたの？",
-    "あなたは趣味とかある？　私はね、今は魔法かな"
+    "あなたは趣味とかある？ 私はね、今は魔法かな"
   ];
   
   const remember = [
@@ -805,11 +852,11 @@ function getFaceImage(text) {
     "もう少し暇だったらバネッサまで遊びに行くんだけど",
     "カップラーメン食べたいなぁ",
     "護王様ってあの身体でどうやって仕事してるんだろ",
-    "今日は…あの人の誕生日ね。　…お団子食べたくなってきた",
-    "今日は誕生日ね、ケーキでも食べようかしら。　…いや、この世界での誕生日は知らないけど…",
+    "今日は…あの人の誕生日ね。 …お団子食べたくなってきた",
+    "今日は誕生日ね、ケーキでも食べようかしら。 …いや、この世界での誕生日は知らないけど…",
     "…今日はあの場所の……何周年なんだ…？",
-    "今日はクリスマス、プレゼントには時間がほしいわ。　…前の人生でもそんなこと言ってたような…",
-    "いい匂い…　これはカンボジアブロッコリー…？",
+    "今日はクリスマス、プレゼントには時間がほしいわ。 …前の人生でもそんなこと言ってたような…",
+    "いい匂い… これはカンボジアブロッコリー…？",
     "そういえば、あなたの誕生日っていつなの？",
     "なんだか最近よく顔を見ている気がするわね",
     "ごはんは何食べたの？",
@@ -842,16 +889,16 @@ function getFaceImage(text) {
     "食後のデザートってずっと食べたくなるわよね",
     "…こんな時間に何をしてるの？",
     "早く寝なさい、身体に障るわよ",
-    "炎の魔力と轟音……　またやったわねマッヒー…",
-    "まだ起きてるの？　…仕方ないわね",
+    "炎の魔力と轟音…… またやったわねマッヒー…",
+    "まだ起きてるの？ …仕方ないわね",
     "私と喋ってないで、やることやりなさいよ",
     "21時就寝は早い？千年前の私に言ってちょうだい",
     "一日が終わるのはあっという間よね…",
     "まーた遅くまで起きて……",
-    "古代の書物が出た？　…どうせアレかアレだろうな…",
+    "古代の書物が出た？ …どうせアレかアレだろうな…",
     "全っ然終わらん…",
     "寝たら朝が来る……",
-    "深夜の甘味は最高だね～…　ハッ！いつから見てたの！？"
+    "深夜の甘味は最高だね～… ハッ！いつから見てたの！？"
   ];
 
   if (smile.some(s => text.includes(s))) return "fubuki_smile.png";
@@ -877,7 +924,6 @@ function updateBackground() {
   document.body.className = "bg-" + targetZone;
 }
 
-// 留守番状態の監視と自動フェード切り替え
 function updateCharacterPresence() {
   if (isDebugMode) return;
   const now = new Date();
@@ -972,14 +1018,14 @@ function initializeAchievements(targetSeen) {
   }
 
   if (achievements.seasonal.unlocked) {
-    document.getElementById("editBirthdayBtn").style.display = "inline-block";
+    document.getElementById("editBirthdayBtn").style.display = "block";
   } else {
     document.getElementById("editBirthdayBtn").style.display = "none";
   }
   
   const currentSongs = isDebugMode ? debugUnlockedSongs : unlockedSongs;
   if (currentSongs.length > 0) {
-    document.getElementById("musicRoomBtn").style.display = "inline-block";
+    document.getElementById("musicRoomBtn").style.display = "block";
   } else {
     document.getElementById("musicRoomBtn").style.display = "none";
   }
@@ -991,7 +1037,6 @@ let seen = JSON.parse(localStorage.getItem("seen") || "[]");
 initializeAchievements(seen);
 updateBackground();
 
-// ロード時にもツゲの時間かどうかをチェックして初期表示を合わせる
 const initialHour = new Date().getHours();
 if (!isDebugMode && initialHour === tsugeHour) {
   currentDisplayedCharacter = "tsuge";
@@ -1215,7 +1260,6 @@ function dismissCurrentReminder() {
   }, 300);
 }
 
-// 10秒ごとの定期チェック（ツゲの時間もここで判定）
 setInterval(() => {
   checkTsugeTime();
   checkActiveReminders();
@@ -1223,6 +1267,118 @@ setInterval(() => {
   updateCharacterPresence();
 }, 10000);
 
+// ===== メニュー関連の処理 =====
+function openMainMenu() {
+  const modal = document.getElementById("mainMenuModal");
+  document.getElementById("overlay").style.display = "block";
+  modal.style.display = "block";
+  setTimeout(() => {
+    document.getElementById("overlay").classList.add("show");
+    modal.classList.add("show");
+  }, 10);
+}
+
+function closeMainMenu() {
+  const modal = document.getElementById("mainMenuModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+// メニューから他のモーダルを開く時にオーバーレイを消さないための処理
+function switchModalFromMenu(targetOpenFunc) {
+  const menuModal = document.getElementById("mainMenuModal");
+  menuModal.classList.remove("show");
+  setTimeout(() => {
+    menuModal.style.display = "none";
+    targetOpenFunc();
+  }, 200);
+}
+
+// ===== データ引き継ぎ（エクスポート・インポート） =====
+function openDataModal() {
+  const modal = document.getElementById("dataModal");
+  document.getElementById("overlay").style.display = "block";
+  modal.style.display = "block";
+  setTimeout(() => {
+    document.getElementById("overlay").classList.add("show");
+    modal.classList.add("show");
+  }, 10);
+}
+
+function closeDataModal() {
+  const modal = document.getElementById("dataModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+function exportData() {
+  const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate"];
+  const exportObj = {};
+  keys.forEach(k => {
+    exportObj[k] = localStorage.getItem(k);
+  });
+  
+  const dataStr = JSON.stringify(exportObj);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement("a");
+  a.href = url;
+  
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}`;
+  a.download = `fubuki_data_${dateStr}.json`;
+  a.click();
+  
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate"];
+      
+      let hasData = false;
+      keys.forEach(k => {
+        if (data[k] !== undefined) {
+          hasData = true;
+          if (data[k] === null) {
+            localStorage.removeItem(k);
+          } else {
+            localStorage.setItem(k, data[k]);
+          }
+        }
+      });
+      
+      if (!hasData) {
+        throw new Error("No valid data");
+      }
+
+      alert("データの引き継ぎが完了しました！\nページを再読み込みして反映させます。");
+      location.reload();
+    } catch (err) {
+      alert("ファイルの読み込みに失敗しました。\n正しいデータファイル(.json)を選択してください。");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ""; // ファイル選択をリセット
+}
+
+
+// ===== 誕生日関連 =====
 function openBirthdayModal() {
   const mSel = document.getElementById("bdMonth");
   mSel.innerHTML = "";
@@ -1301,10 +1457,11 @@ function saveBirthday() {
   }
 
   closeBirthdayModal();
-  document.getElementById("editBirthdayBtn").style.display = "inline-block";
+  document.getElementById("editBirthdayBtn").style.display = "block";
   setTimeout(() => { showLine(`${m}月${d}日ね。覚えておくわ`, true); }, 300);
 }
 
+// ===== デバッグ・ログ関連 =====
 function handleDebugToggle(checkbox) {
   if (checkbox.checked) {
     checkbox.checked = false; 
@@ -1460,13 +1617,13 @@ function playPianoEvent(songKey) {
   if (isDebugMode) {
     if (!debugUnlockedSongs.includes(songKey)) {
       debugUnlockedSongs.push(songKey);
-      document.getElementById("musicRoomBtn").style.display = "inline-block";
+      document.getElementById("musicRoomBtn").style.display = "block";
     }
   } else {
     if (!unlockedSongs.includes(songKey)) {
       unlockedSongs.push(songKey);
       localStorage.setItem("unlockedSongs", JSON.stringify(unlockedSongs));
-      document.getElementById("musicRoomBtn").style.display = "inline-block";
+      document.getElementById("musicRoomBtn").style.display = "block";
     }
   }
 
@@ -1540,7 +1697,7 @@ function stopMusic() {
   }
 }
 
-
+// ===== メイン会話処理 =====
 function speak(){
   if (isPlayingMusic) return;
 
@@ -1587,7 +1744,7 @@ function speak(){
       "……",
       "暇なのかニンゲン",
       "話題などないぞ",
-      "…そういえば昨日、…　…何も思いつかない",
+      "…そういえば昨日、… …何も思いつかない",
       "………",
       "…己の成すべきことを成せ",
       "…もう喋らないからな"
@@ -1748,7 +1905,7 @@ function typeText(text, isDynamic = false) {
       typing = false;
       if (text.includes(achievements.seasonal.reward)) {
         waitingForBirthdayClick = true;
-        document.getElementById("editBirthdayBtn").style.display = "inline-block";
+        document.getElementById("editBirthdayBtn").style.display = "block";
       }
       
       if (text.includes("ちょっと弾いてあげるから早く寝なさいよ。何がいい？")) {
@@ -1777,7 +1934,7 @@ function checkAchievements() {
       pendingRewards.push("✨ " + ach.reward);
       if (!achievementLines.includes(ach.reward)) achievementLines.push(ach.reward);
       addRewardToPool(key, ach.reward);
-      if (key === "seasonal") document.getElementById("editBirthdayBtn").style.display = "inline-block";
+      if (key === "seasonal") document.getElementById("editBirthdayBtn").style.display = "block";
     }
   }
 
@@ -1807,6 +1964,10 @@ document.getElementById("overlay").onclick = function(e) {
       closeReminderCreateModal();
     } else if (document.getElementById("musicRoomModal").classList.contains("show")) {
       closeMusicRoomModal();
+    } else if (document.getElementById("mainMenuModal").classList.contains("show")) {
+      closeMainMenu();
+    } else if (document.getElementById("dataModal").classList.contains("show")) {
+      closeDataModal();
     } else {
       toggleLog();
     }
