@@ -584,6 +584,7 @@ const normalLines = [
 "ツゲ、どこ行ってたの？"
 ];
 
+// 修正点：セリフのスペースを元に戻しました
 const timeLines = {
 morning: [
 "おはよう、今日もいい朝ね",
@@ -674,7 +675,6 @@ const playerBirthdayLine = "今日はあなたの誕生日、でしょう？お�
 
 achievements.all = { lines: [], reward: "いらっしゃい、今日はどうしたの？", unlocked: false };
 
-// ===== 親密度・NGワード関連データ =====
 const lv1Greetings = {
   morning: "おはよう。今日は何時に起きたの？",
   noon1: "なんだか最近よく顔を見ている気がするわね",
@@ -704,7 +704,6 @@ const lvMaxLinesMidnight = [
 const ngWords1 = ["マッヒー", "よっち", "ヨッチ", "果柱", "ルイベ", "爆発", "メモラビリア", "ビックス教団", "蒼い月", "残業", "徹夜", "落単", "留年", "神王", "グゴール"];
 const ngWords2 = ["ゼミつく", "ゼミつかー", "ナンチューズ", "ナンコーズ", "ナンダイズ", "セミつこ", "ゼンタイケイジバン", "サーベイ", "ZMTQ", "TGP", "とど恋", "吸戦", "星降る", "我天", "えどらー", "アンタイ", "シュウジ", "ヒロコ", "ゼータ", "古代勇者", "現代勇者", "魔王四天王", "壱ノ護王", "弐ノ護王", "參ノ護王", "肆ノ護王", "1号さん", "2号さん", "3号さん", "4号さん", "運営さん", "わんこぉ", "のぶにい", "エックス", "アクア", "にゃありい", "ばーぼん", "ふらっぺ", "フラッペ", "まつはる", "マツハル", "心結", "こころむすび", "アリス", "デコイ", "ルナ", "バネッサ", "妖精国", "ティルナノーグ", "氷河坑道連邦", "ツララブキ", "キーテジ", "獣の国", "ジェイルエデン", "世界樹図書館", "ユグドラシル", "ニライカナイ", "東の国", "ファドゥ", "吸血鬼城", "原初精霊", "ペレ", "ウンディーネ", "ケラウノス", "フレスヴェルグ", "ツゲノイナギ", "カリアッハ", "カーラクータ", "セフィロト", "カンボジアブロッコリー", "ムチグラアミーゴ", "ムエタイ", "僕らだけの世界", "僕らだけの夏", "僕らだけの未来", "僕らだけのミライ", "僕らだけの栄光", "僕らだけの鼓動", "ぼくらだけのよぞら", "僕らだけの夜空", "僕らだけの友情", "僕らだけの黎明", "僕らだけのキセキ", "繋がるセカイ", "星のキセキ"];
 
-// ===== 音楽関連データ =====
 let isPlayingMusic = false;
 let currentAudio = null;
 let unlockedSongs = JSON.parse(localStorage.getItem("unlockedSongs") || "[]");
@@ -716,7 +715,6 @@ const musicData = {
   song3: { title: "思い出の夏の曲", file: "summer.mp3" }
 };
 
-// ===== ロジック・状態管理 =====
 let typing = false;
 let pendingRewards = [];
 let pendingNGReaction = null;
@@ -736,6 +734,11 @@ let dynamicAffinity = JSON.parse(localStorage.getItem("dynamicAffinity") || '{"p
 let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
 
 let currentDisplayedCharacter = "fubuki";
+
+// ===== 追加：スペース判定を完全に無視する強力な修復機能 =====
+function normalizeStr(str) {
+  return str.replace(/[\s ]+/g, "");
+}
 
 function getTodayStr() {
   const now = new Date();
@@ -766,7 +769,8 @@ function getTotalAffinity() {
   const currentSeen = isDebugMode ? debugSeen : seen;
   const rareAndSeasonal = [...rareLines.normal, ...rareLines.midnight, ...Object.values(eventLines).flat()];
   rareAndSeasonal.forEach(text => {
-    if (currentSeen.includes(text)) base += 2;
+    // 修正点：空白を無視して一致判定
+    if (currentSeen.some(s => normalizeStr(s) === normalizeStr(text))) base += 2;
   });
   return base + dynamicAffinity.points;
 }
@@ -901,10 +905,10 @@ function getFaceImage(text) {
     "深夜の甘味は最高だね～… ハッ！いつから見てたの！？"
   ];
 
-  if (smile.some(s => text.includes(s))) return "fubuki_smile.png";
-  if (remember.some(s => text.includes(s))) return "fubuki_remember.png";
-  if (sleep.some(s => text.includes(s))) return "fubuki_sleep.png";
-  if (puzzled.some(s => text.includes(s))) return "fubuki_puzzled.png";
+  if (smile.some(s => normalizeStr(text).includes(normalizeStr(s)))) return "fubuki_smile.png";
+  if (remember.some(s => normalizeStr(text).includes(normalizeStr(s)))) return "fubuki_remember.png";
+  if (sleep.some(s => normalizeStr(text).includes(normalizeStr(s)))) return "fubuki_sleep.png";
+  if (puzzled.some(s => normalizeStr(text).includes(normalizeStr(s)))) return "fubuki_puzzled.png";
 
   return "fubuki.png";
 }
@@ -1008,7 +1012,8 @@ function initializeAchievements(targetSeen) {
 
   for (let key in achievements) {
     const ach = achievements[key];
-    const allSeen = ach.lines.every(line => targetSeen.includes(line));
+    // 修正点：空白の違いを無視して判定するように強化
+    const allSeen = ach.lines.every(line => targetSeen.some(s => normalizeStr(s) === normalizeStr(line)));
 
     if (allSeen) {
       ach.unlocked = true;
@@ -1267,7 +1272,6 @@ setInterval(() => {
   updateCharacterPresence();
 }, 10000);
 
-// ===== メニュー関連の処理 =====
 function openMainMenu() {
   const modal = document.getElementById("mainMenuModal");
   document.getElementById("overlay").style.display = "block";
@@ -1288,7 +1292,6 @@ function closeMainMenu() {
   }, 200);
 }
 
-// メニューから他のモーダルを開く時にオーバーレイを消さないための処理
 function switchModalFromMenu(targetOpenFunc) {
   const menuModal = document.getElementById("mainMenuModal");
   menuModal.classList.remove("show");
@@ -1298,7 +1301,6 @@ function switchModalFromMenu(targetOpenFunc) {
   }, 200);
 }
 
-// ===== データ引き継ぎ（エクスポート・インポート） =====
 function openDataModal() {
   const modal = document.getElementById("dataModal");
   document.getElementById("overlay").style.display = "block";
@@ -1374,11 +1376,9 @@ function importData(event) {
     }
   };
   reader.readAsText(file);
-  event.target.value = ""; // ファイル選択をリセット
+  event.target.value = ""; 
 }
 
-
-// ===== 誕生日関連 =====
 function openBirthdayModal() {
   const mSel = document.getElementById("bdMonth");
   mSel.innerHTML = "";
@@ -1461,7 +1461,6 @@ function saveBirthday() {
   setTimeout(() => { showLine(`${m}月${d}日ね。覚えておくわ`, true); }, 300);
 }
 
-// ===== デバッグ・ログ関連 =====
 function handleDebugToggle(checkbox) {
   if (checkbox.checked) {
     checkbox.checked = false; 
@@ -1524,12 +1523,13 @@ function resetNormalHistory() {
   }
 }
 
+// 修正点：空白の違いを無視して保存判定するように強化
 function saveSeen(text){
   const cleanText = text.replace("✨ ", "");
   if (isDebugMode) {
-    if(!debugSeen.includes(cleanText)) debugSeen.push(cleanText);
+    if(!debugSeen.some(s => normalizeStr(s) === normalizeStr(cleanText))) debugSeen.push(cleanText);
   } else {
-    if(!seen.includes(cleanText)){
+    if(!seen.some(s => normalizeStr(s) === normalizeStr(cleanText))){
       seen.push(cleanText);
       localStorage.setItem("seen", JSON.stringify(seen));
     }
@@ -1571,8 +1571,10 @@ function renderLog() {
   sections.forEach(([name, arr]) => {
     logList.innerHTML += `<b style="font-family: var(--font-classic); color: #2a6fff;">${name}</b><br>`;
     arr.forEach(text => {
-      if (name !== "アチーブメント" && allRewards.includes(text)) return; 
-      logList.innerHTML += currentSeen.includes(text) ? text : "？？？";
+      // 修正点：空白の違いを無視して一覧表示判定するように強化
+      if (name !== "アチーブメント" && allRewards.some(r => normalizeStr(r) === normalizeStr(text))) return; 
+      const isSeen = currentSeen.some(s => normalizeStr(s) === normalizeStr(text));
+      logList.innerHTML += isSeen ? text : "？？？";
       logList.innerHTML += "<br>";
     });
     logList.innerHTML += "<br>";
@@ -1590,7 +1592,6 @@ function getZone(hour){
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-// ===== 音楽再生関連 =====
 function openMusicSelectModal() {
   const modal = document.getElementById("musicSelectModal");
   document.getElementById("overlay").style.display = "block";
@@ -1697,7 +1698,6 @@ function stopMusic() {
   }
 }
 
-// ===== メイン会話処理 =====
 function speak(){
   if (isPlayingMusic) return;
 
@@ -1928,7 +1928,8 @@ function checkAchievements() {
     const ach = achievements[key];
     if (ach.unlocked || key === "all") continue;
 
-    const allSeen = ach.lines.every(line => currentSeen.includes(line));
+    // 修正点：空白の違いを無視してアチーブメント達成を判定するように強化
+    const allSeen = ach.lines.every(line => currentSeen.some(s => normalizeStr(s) === normalizeStr(line)));
     if (allSeen) {
       ach.unlocked = true;
       pendingRewards.push("✨ " + ach.reward);
@@ -1940,7 +1941,7 @@ function checkAchievements() {
 
   if (!achievements.all.unlocked) {
     const allLines = achievements.all.lines;
-    const allSeen = allLines.every(line => currentSeen.includes(line));
+    const allSeen = allLines.every(line => currentSeen.some(s => normalizeStr(s) === normalizeStr(line)));
     if (allSeen && allLines.length > 0) {
       achievements.all.unlocked = true;
       pendingRewards.push("✨ " + achievements.all.reward);
