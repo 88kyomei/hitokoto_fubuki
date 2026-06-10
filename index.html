@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="icon.png?v=2">
-<link rel="apple-touch-icon" href="icon.png?v=2">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <title>ひとことフブキ</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -216,14 +216,25 @@ body.bg-midnight .star-field::after {
   text-align: center;
 }
 
+/* --- 金属の縁取り演出 (Lv3 / MAX) --- */
 body.affinity-lv3 .log, body.affinity-lv3 .container, body.affinity-lv3 .reminder-display {
-  border-color: rgba(100, 200, 255, 0.8);
-  box-shadow: 0 0 15px rgba(100, 200, 255, 0.5);
+  border-color: #a9cce3;
+  box-shadow:
+    inset 0 1px 3px rgba(255,255,255,0.8),
+    inset 0 -1px 3px rgba(41,128,185,0.3),
+    0 0 0 1px #eaf2f8,
+    0 0 0 2px #5499c7,
+    0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
 body.affinity-max .log, body.affinity-max .container, body.affinity-max .reminder-display {
-  border-color: rgba(220, 230, 240, 0.9);
-  box-shadow: 0 0 25px rgba(220, 230, 240, 0.7);
+  border-color: #d0d3d4;
+  box-shadow:
+    inset 0 1px 4px rgba(255,255,255,0.9),
+    inset 0 -1px 4px rgba(0,0,0,0.2),
+    0 0 0 1px #fdfefe,
+    0 0 0 3px #99a3a4,
+    0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .title {
@@ -282,17 +293,16 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
   color: #7fbce0;
 }
 
+/* --- オーバーレイ関連 --- */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
   background: rgba(0,0,0,0.25);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
   opacity: 0;
   pointer-events: none;
   transition: 0.2s;
@@ -303,6 +313,18 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
 .overlay.show {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* MAX演出用の特別なオーバーレイ */
+#darkout {
+  background: rgba(0,0,0,0.85);
+  z-index: 900;
+  transition: opacity 1.5s ease;
+}
+#whiteout {
+  background: #ffffff;
+  z-index: 2000;
+  transition: opacity 1.5s ease;
 }
 
 .closeBtn {
@@ -427,6 +449,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 <div class="star-field"></div>
 <div id="overlay" class="overlay"></div>
+<div id="darkout" class="overlay"></div>
+<div id="whiteout" class="overlay"></div>
 
 <div class="menu">
   <button onclick="toggleLog()">セリフ一覧</button>
@@ -584,7 +608,6 @@ const normalLines = [
 "ツゲ、どこ行ってたの？"
 ];
 
-// 修正点：セリフのスペースを元に戻しました
 const timeLines = {
 morning: [
 "おはよう、今日もいい朝ね",
@@ -735,7 +758,12 @@ let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
 
 let currentDisplayedCharacter = "fubuki";
 
-// ===== 追加：スペース判定を完全に無視する強力な修復機能 =====
+// --- MAX演出用の状態管理 ---
+let maxEventState = parseInt(localStorage.getItem("maxEventState") || "0");
+if (maxEventState === 1) maxEventState = 0; // 途中で閉じた場合はリセットしてやり直し
+let maxEventClicks = 0;
+let maxEventActive = false;
+
 function normalizeStr(str) {
   return str.replace(/[\s ]+/g, "");
 }
@@ -769,7 +797,6 @@ function getTotalAffinity() {
   const currentSeen = isDebugMode ? debugSeen : seen;
   const rareAndSeasonal = [...rareLines.normal, ...rareLines.midnight, ...Object.values(eventLines).flat()];
   rareAndSeasonal.forEach(text => {
-    // 修正点：空白を無視して一致判定
     if (currentSeen.some(s => normalizeStr(s) === normalizeStr(text))) base += 2;
   });
   return base + dynamicAffinity.points;
@@ -780,10 +807,83 @@ function updateAffinityUI() {
   document.body.classList.remove('affinity-lv3', 'affinity-max');
   if (total >= 3000) {
     document.body.classList.add('affinity-max');
+    checkMaxAffinityEvent();
   } else if (total >= 1000) {
     document.body.classList.add('affinity-lv3');
   }
 }
+
+// ===== 親密度MAX 到達イベント =====
+function checkMaxAffinityEvent() {
+  if (maxEventState === 0) {
+    triggerMaxEventPart1();
+  } else if (maxEventState === 2) {
+    document.title = "いつでもフブキ";
+    document.querySelector(".title").textContent = "いつでもフブキ";
+  }
+}
+
+function triggerMaxEventPart1() {
+  maxEventActive = true;
+  maxEventState = 1;
+  localStorage.setItem("maxEventState", 1);
+
+  // 画面を暗転
+  const darkout = document.getElementById("darkout");
+  darkout.style.display = "block";
+  setTimeout(() => darkout.classList.add("show"), 10);
+
+  // タイトル部分の位置を取得して、重なるようにクローンを生成
+  const origTitle = document.querySelector(".title");
+  const rect = origTitle.getBoundingClientRect();
+
+  const clone = document.createElement("div");
+  clone.textContent = origTitle.textContent;
+  clone.style.position = "fixed";
+  clone.style.top = rect.top + "px";
+  clone.style.left = rect.left + "px";
+  clone.style.width = rect.width + "px";
+  clone.style.height = rect.height + "px";
+  clone.style.fontFamily = "var(--font-classic)";
+  clone.style.fontSize = "22px";
+  clone.style.fontWeight = "600";
+  clone.style.letterSpacing = "2px";
+  clone.style.color = getComputedStyle(origTitle).color;
+  clone.style.textAlign = "center";
+  clone.style.zIndex = 1000;
+  clone.style.transition = "text-shadow 1.5s ease, color 1.5s ease, transform 1.5s ease, opacity 1.5s ease";
+  document.body.appendChild(clone);
+
+  origTitle.style.opacity = "0";
+
+  setTimeout(() => {
+    // 強く白く光る
+    clone.style.color = "transparent";
+    clone.style.textShadow = "0 0 15px #fff, 0 0 30px #fff, 0 0 50px #fff";
+    clone.style.transform = "scale(1.1)";
+
+    setTimeout(() => {
+      // 光が引いて文字が変わる
+      clone.textContent = "いつでもフブキ";
+      clone.style.color = "#fff"; 
+      clone.style.textShadow = "0 0 10px rgba(255,255,255,0.8)";
+      clone.style.transform = "scale(1)";
+
+      // 暗転解除
+      darkout.classList.remove("show");
+      setTimeout(() => {
+        darkout.style.display = "none";
+        origTitle.textContent = "いつでもフブキ";
+        origTitle.style.opacity = "1";
+        document.title = "いつでもフブキ";
+        clone.remove();
+        
+        maxEventActive = false; // タップ待ち状態へ
+      }, 1500);
+    }, 1500);
+  }, 1000);
+}
+
 
 function checkLoginBonus() {
   const today = getTodayStr();
@@ -1012,7 +1112,6 @@ function initializeAchievements(targetSeen) {
 
   for (let key in achievements) {
     const ach = achievements[key];
-    // 修正点：空白の違いを無視して判定するように強化
     const allSeen = ach.lines.every(line => targetSeen.some(s => normalizeStr(s) === normalizeStr(line)));
 
     if (allSeen) {
@@ -1322,7 +1421,7 @@ function closeDataModal() {
 }
 
 function exportData() {
-  const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate"];
+  const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate", "maxEventState"];
   const exportObj = {};
   keys.forEach(k => {
     exportObj[k] = localStorage.getItem(k);
@@ -1351,7 +1450,7 @@ function importData(event) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate"];
+      const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate", "maxEventState"];
       
       let hasData = false;
       keys.forEach(k => {
@@ -1523,7 +1622,6 @@ function resetNormalHistory() {
   }
 }
 
-// 修正点：空白の違いを無視して保存判定するように強化
 function saveSeen(text){
   const cleanText = text.replace("✨ ", "");
   if (isDebugMode) {
@@ -1571,7 +1669,6 @@ function renderLog() {
   sections.forEach(([name, arr]) => {
     logList.innerHTML += `<b style="font-family: var(--font-classic); color: #2a6fff;">${name}</b><br>`;
     arr.forEach(text => {
-      // 修正点：空白の違いを無視して一覧表示判定するように強化
       if (name !== "アチーブメント" && allRewards.some(r => normalizeStr(r) === normalizeStr(text))) return; 
       const isSeen = currentSeen.some(s => normalizeStr(s) === normalizeStr(text));
       logList.innerHTML += isSeen ? text : "？？？";
@@ -1700,6 +1797,34 @@ function stopMusic() {
 
 function speak(){
   if (isPlayingMusic) return;
+
+  // MAX演出中のタップ無効処理と進行
+  if (maxEventActive) return;
+
+  if (getTotalAffinity() >= 3000 && maxEventState === 1) {
+    if (maxEventClicks === 0) {
+      showLine("……あ", false, true, "fubuki_remember.png");
+      maxEventClicks++;
+    } else if (maxEventClicks === 1 && !typing) {
+      showLine("いつもありがとう", false, true, "fubuki_smile.png");
+      maxEventClicks++;
+      maxEventActive = true;
+
+      // 3秒後にホワイトアウトしてリロード
+      setTimeout(() => {
+        const whiteout = document.getElementById("whiteout");
+        whiteout.style.display = "block";
+        setTimeout(() => whiteout.classList.add("show"), 10);
+
+        setTimeout(() => {
+          maxEventState = 2;
+          localStorage.setItem("maxEventState", 2);
+          location.reload();
+        }, 2000);
+      }, 3000);
+    }
+    return; // 特別な会話中は通常のランダム会話をスキップ
+  }
 
   updateBackground();
 
@@ -1928,7 +2053,6 @@ function checkAchievements() {
     const ach = achievements[key];
     if (ach.unlocked || key === "all") continue;
 
-    // 修正点：空白の違いを無視してアチーブメント達成を判定するように強化
     const allSeen = ach.lines.every(line => currentSeen.some(s => normalizeStr(s) === normalizeStr(line)));
     if (allSeen) {
       ach.unlocked = true;
