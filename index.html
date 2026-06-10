@@ -218,23 +218,23 @@ body.bg-midnight .star-field::after {
 
 /* --- 金属の縁取り演出 (Lv3 / MAX) --- */
 body.affinity-lv3 .log, body.affinity-lv3 .container, body.affinity-lv3 .reminder-display {
-  border-color: #a9cce3;
+  border: 2px solid #8ab6d6;
   box-shadow:
-    inset 0 1px 3px rgba(255,255,255,0.8),
-    inset 0 -1px 3px rgba(41,128,185,0.3),
-    0 0 0 1px #eaf2f8,
-    0 0 0 2px #5499c7,
-    0 8px 32px rgba(0, 0, 0, 0.15);
+    inset 0 2px 4px rgba(255,255,255,0.9),
+    inset 0 -2px 4px rgba(41,128,185,0.4),
+    0 0 0 3px #eaf2f8,
+    0 0 0 6px #5499c7,
+    0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 body.affinity-max .log, body.affinity-max .container, body.affinity-max .reminder-display {
-  border-color: #d0d3d4;
+  border: 2px solid #b0bec5;
   box-shadow:
-    inset 0 1px 4px rgba(255,255,255,0.9),
-    inset 0 -1px 4px rgba(0,0,0,0.2),
-    0 0 0 1px #fdfefe,
-    0 0 0 3px #99a3a4,
-    0 8px 32px rgba(0, 0, 0, 0.2);
+    inset 0 2px 4px rgba(255,255,255,1.0),
+    inset 0 -2px 4px rgba(0,0,0,0.3),
+    0 0 0 3px #eceff1,
+    0 0 0 6px #78909c,
+    0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .title {
@@ -760,7 +760,7 @@ let currentDisplayedCharacter = "fubuki";
 
 // --- MAX演出用の状態管理 ---
 let maxEventState = parseInt(localStorage.getItem("maxEventState") || "0");
-if (maxEventState === 1) maxEventState = 0; // 途中で閉じた場合はリセットしてやり直し
+if (maxEventState === 1) maxEventState = 0; 
 let maxEventClicks = 0;
 let maxEventActive = false;
 
@@ -804,16 +804,24 @@ function getTotalAffinity() {
 
 function updateAffinityUI() {
   const total = getTotalAffinity();
-  document.body.classList.remove('affinity-lv3', 'affinity-max');
   if (total >= 3000) {
-    document.body.classList.add('affinity-max');
-    checkMaxAffinityEvent();
+    if (!document.body.classList.contains('affinity-max')) {
+      document.body.classList.remove('affinity-lv3');
+      document.body.classList.add('affinity-max');
+      checkMaxAffinityEvent();
+    }
   } else if (total >= 1000) {
-    document.body.classList.add('affinity-lv3');
+    if (!document.body.classList.contains('affinity-lv3')) {
+      document.body.classList.remove('affinity-max');
+      document.body.classList.add('affinity-lv3');
+    }
+  } else {
+    if (document.body.classList.contains('affinity-lv3') || document.body.classList.contains('affinity-max')) {
+      document.body.classList.remove('affinity-lv3', 'affinity-max');
+    }
   }
 }
 
-// ===== 親密度MAX 到達イベント =====
 function checkMaxAffinityEvent() {
   if (maxEventState === 0) {
     triggerMaxEventPart1();
@@ -828,12 +836,10 @@ function triggerMaxEventPart1() {
   maxEventState = 1;
   localStorage.setItem("maxEventState", 1);
 
-  // 画面を暗転
   const darkout = document.getElementById("darkout");
   darkout.style.display = "block";
   setTimeout(() => darkout.classList.add("show"), 10);
 
-  // タイトル部分の位置を取得して、重なるようにクローンを生成
   const origTitle = document.querySelector(".title");
   const rect = origTitle.getBoundingClientRect();
 
@@ -857,19 +863,16 @@ function triggerMaxEventPart1() {
   origTitle.style.opacity = "0";
 
   setTimeout(() => {
-    // 強く白く光る
     clone.style.color = "transparent";
     clone.style.textShadow = "0 0 15px #fff, 0 0 30px #fff, 0 0 50px #fff";
     clone.style.transform = "scale(1.1)";
 
     setTimeout(() => {
-      // 光が引いて文字が変わる
       clone.textContent = "いつでもフブキ";
       clone.style.color = "#fff"; 
       clone.style.textShadow = "0 0 10px rgba(255,255,255,0.8)";
       clone.style.transform = "scale(1)";
 
-      // 暗転解除
       darkout.classList.remove("show");
       setTimeout(() => {
         darkout.style.display = "none";
@@ -878,12 +881,11 @@ function triggerMaxEventPart1() {
         document.title = "いつでもフブキ";
         clone.remove();
         
-        maxEventActive = false; // タップ待ち状態へ
+        maxEventActive = false; 
       }, 1500);
     }, 1500);
   }, 1000);
 }
-
 
 function checkLoginBonus() {
   const today = getTodayStr();
@@ -1030,6 +1032,8 @@ function updateBackground() {
 
 function updateCharacterPresence() {
   if (isDebugMode) return;
+  if (maxEventState === 1) return; // MAX演出中は割り込みスキップ
+  
   const now = new Date();
   const currentHour = now.getHours();
   const imgEl = document.getElementById("img");
@@ -1798,7 +1802,6 @@ function stopMusic() {
 function speak(){
   if (isPlayingMusic) return;
 
-  // MAX演出中のタップ無効処理と進行
   if (maxEventActive) return;
 
   if (getTotalAffinity() >= 3000 && maxEventState === 1) {
@@ -1810,7 +1813,9 @@ function speak(){
       maxEventClicks++;
       maxEventActive = true;
 
-      // 3秒後にホワイトアウトしてリロード
+      // タップ無効化の徹底
+      document.body.style.pointerEvents = "none";
+
       setTimeout(() => {
         const whiteout = document.getElementById("whiteout");
         whiteout.style.display = "block";
@@ -1823,7 +1828,7 @@ function speak(){
         }, 2000);
       }, 3000);
     }
-    return; // 特別な会話中は通常のランダム会話をスキップ
+    return; 
   }
 
   updateBackground();
