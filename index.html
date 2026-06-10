@@ -200,41 +200,55 @@ body.bg-midnight .star-field::after {
   z-index: 2;
 }
 
+/* --- セリフ枠（コンテナ）の基本設定 --- */
 .container {
   position: relative;
   width: 320px;
   padding: 15px;
   border-radius: 16px;
-  
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.5); /* 基準となる元の白枠 */
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.5s ease;
-
+  transition: border-color 0.5s ease, box-shadow 0.5s ease; /* transitionをallから特定要素のみに */
   text-align: center;
 }
 
-/* --- 金属の縁取り演出 (Lv3 / MAX) --- */
-body.affinity-lv3 .log, body.affinity-lv3 .container, body.affinity-lv3 .reminder-display {
-  border: 2px solid #8ab6d6;
-  box-shadow:
-    inset 0 2px 4px rgba(255,255,255,0.9),
-    inset 0 -2px 4px rgba(41,128,185,0.4),
-    0 0 0 3px #eaf2f8,
-    0 0 0 6px #5499c7,
-    0 8px 32px rgba(0, 0, 0, 0.2);
+/* グラデーション枠線を作るための擬似要素 */
+.container::after {
+  content: "";
+  position: absolute;
+  top: -1px; left: -1px; right: -1px; bottom: -1px; /* 1pxの枠線にぴったり被せる */
+  border-radius: 16px;
+  padding: 2px; /* 新しい枠の太さ（2px） */
+  background: transparent;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
 }
 
-body.affinity-max .log, body.affinity-max .container, body.affinity-max .reminder-display {
-  border: 2px solid #b0bec5;
-  box-shadow:
-    inset 0 2px 4px rgba(255,255,255,1.0),
-    inset 0 -2px 4px rgba(0,0,0,0.3),
-    0 0 0 3px #eceff1,
-    0 0 0 6px #78909c,
-    0 8px 32px rgba(0, 0, 0, 0.25);
+/* --- Lv3 の青金属グラデーション枠 --- */
+body.affinity-lv3 .container {
+  border-color: transparent; /* 元の白枠を消す */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+body.affinity-lv3 .container::after {
+  opacity: 1;
+  background: linear-gradient(135deg, #a1c4fd, #eaf2f8, #5499c7);
+}
+
+/* --- MAX の銀(プラチナ)金属グラデーション枠 --- */
+body.affinity-max .container {
+  border-color: transparent; /* 元の白枠を消す */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+body.affinity-max .container::after {
+  opacity: 1;
+  background: linear-gradient(135deg, #ffffff, #b0bec5, #78909c);
 }
 
 .title {
@@ -639,7 +653,7 @@ evening: [
 ],
 night: [
 "今日も一日、お疲れ様",
-"夜ご飯おいしかったわ、どこの具材使ってたんだろう",
+"夜ご飯おいしかったわ、どどこの具材使ってたんだろう",
 "食後のデザートってずっと食べたくなるわよね",
 "私はそろそろ寝るわ。おやすみなさい",
 "(明日はあれやらないと…)"
@@ -1015,6 +1029,7 @@ function getFaceImage(text) {
   return "fubuki.png";
 }
 
+// 修正点：クラスのリセット方法を変更し、枠線の再読み込み（チカチカ）を防止
 function updateBackground() {
   const now = new Date();
   const hour = now.getHours();
@@ -1027,7 +1042,13 @@ function updateBackground() {
       targetZone = condition;
     }
   }
-  document.body.className = "bg-" + targetZone;
+  
+  const classesToRemove = [];
+  document.body.classList.forEach(cls => {
+    if (cls.startsWith('bg-')) classesToRemove.push(cls);
+  });
+  classesToRemove.forEach(cls => document.body.classList.remove(cls));
+  document.body.classList.add("bg-" + targetZone);
 }
 
 function updateCharacterPresence() {
@@ -1813,7 +1834,7 @@ function speak(){
       maxEventClicks++;
       maxEventActive = true;
 
-      // タップ無効化の徹底
+      // 即座にタップ・操作を完全に無効化
       document.body.style.pointerEvents = "none";
 
       setTimeout(() => {
@@ -2008,9 +2029,14 @@ function showLine(text, isRare, isDynamic = false, forcedImage = null){
   const el = document.getElementById("speech");
   el.style.color = isRare ? "#2a6fff" : "#333";
   
+  // 修正点: ツゲの画像が指定された時だけツゲと判定するように変更
   if (forcedImage) {
     document.getElementById("img").src = forcedImage;
-    currentDisplayedCharacter = "tsuge";
+    if (forcedImage === "tsuge.png") {
+      currentDisplayedCharacter = "tsuge";
+    } else {
+      currentDisplayedCharacter = "fubuki";
+    }
   } else {
     document.getElementById("img").src = getFaceImage(text);
     currentDisplayedCharacter = "fubuki";
