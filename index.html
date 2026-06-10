@@ -819,8 +819,12 @@ function getTotalAffinity() {
 
 function updateAffinityUI() {
   const total = getTotalAffinity();
-  if (total >= 3000) {
+  const currentHour = new Date().getHours(); // 追加
+  
+  // 変更：ツゲの時間ではない場合のみMAX演出を許可する
+  if (total >= 3000 && currentHour !== tsugeHour) { 
     if (!document.body.classList.contains('affinity-max')) {
+      // ...そのまま...
       document.body.classList.remove('affinity-lv3');
       document.body.classList.add('affinity-max');
       checkMaxAffinityEvent();
