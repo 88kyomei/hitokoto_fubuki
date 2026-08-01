@@ -904,7 +904,8 @@ let userBirthday = localStorage.getItem("userBirthday") || null;
 let waitingForBirthdayClick = false;
 let waitingForMusicClick = false;
 
-let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]");
+let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]").filter(r => !r.isDismissed);
+localStorage.setItem("reminders", JSON.stringify(allReminders));
 let activeReminders = [];
 let currentRemIndex = 0;
 
