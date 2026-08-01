@@ -87,7 +87,6 @@
 -->
 <html lang="ja">
 <head>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-6387RWN7W1"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -135,7 +134,6 @@ body {
   position: relative;
 }
 
-/* --- 背景のグラデーション --- */
 body.bg-morning  { background: linear-gradient(135deg, #FFDAB9 0%, #89CFF0 100%); }
 body.bg-noon1    { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
 body.bg-noon2    { background: linear-gradient(135deg, #2980b9 0%, #6dd5fa 100%); }
@@ -143,7 +141,6 @@ body.bg-evening  { background: linear-gradient(135deg, #0b1a3d 0%, #4b1c5a 40%, 
 body.bg-night    { background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); }
 body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
 
-/* --- 星空レイヤー --- */
 .star-field {
   position: fixed;
   top: 0;
@@ -177,6 +174,55 @@ body.bg-midnight .star-field::after {
   background-size: 300px 300px, 200px 200px;
   background-position: 150px 150px, 70px 110px;
 }
+
+.star-field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 1s ease;
+  overflow: hidden; 
+}
+
+.shooting-star {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+  border-radius: 1px;
+  opacity: 0;
+  display: none; 
+}
+
+body.show-stars .shooting-star {
+  display: block;
+}
+
+.shooting-star::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: -1.5px;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.9);
+}
+
+@keyframes shoot {
+  0% { transform: rotate(135deg) translateX(-200px); opacity: 0; }
+  1% { opacity: 1; }
+  5% { transform: rotate(135deg) translateX(1200px); opacity: 0; }
+  100% { transform: rotate(135deg) translateX(1200px); opacity: 0; }
+}
+
+.star1 { top: 10%; left: 80%; width: 80px; animation: shoot 15s infinite 0s; }
+.star2 { top: -10%; left: 40%; width: 60px; animation: shoot 15s infinite 5s; }
+.star3 { top: 30%; left: 90%; width: 100px; animation: shoot 15s infinite 10s; }
 
 .menu, .reminder-menu, .debug-toggle-container, .debug-menu {
   -webkit-transform: translate3d(0, 0, 0);
@@ -295,28 +341,26 @@ body.bg-midnight .star-field::after {
   z-index: 2;
 }
 
-/* --- セリフ枠（コンテナ）の基本設定 --- */
 .container {
   position: relative;
   width: 320px;
   padding: 15px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.5); /* 基準となる元の白枠 */
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: border-color 0.5s ease, box-shadow 0.5s ease; /* transitionをallから特定要素のみに */
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
   text-align: center;
 }
 
-/* グラデーション枠線を作るための擬似要素 */
 .container::after {
   content: "";
   position: absolute;
-  top: -1px; left: -1px; right: -1px; bottom: -1px; /* 1pxの枠線にぴったり被せる */
+  top: -1px; left: -1px; right: -1px; bottom: -1px;
   border-radius: 16px;
-  padding: 2px; /* 新しい枠の太さ（2px） */
+  padding: 2px;
   background: transparent;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: destination-out;
@@ -326,9 +370,8 @@ body.bg-midnight .star-field::after {
   pointer-events: none;
 }
 
-/* --- Lv3 の青金属グラデーション枠 --- */
 body.affinity-lv3 .container {
-  border-color: transparent; /* 元の白枠を消す */
+  border-color: transparent;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 body.affinity-lv3 .container::after {
@@ -336,9 +379,8 @@ body.affinity-lv3 .container::after {
   background: linear-gradient(135deg, #a1c4fd, #eaf2f8, #5499c7);
 }
 
-/* --- MAX の銀(プラチナ)金属グラデーション枠 --- */
 body.affinity-max .container {
-  border-color: transparent; /* 元の白枠を消す */
+  border-color: transparent;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 body.affinity-max .container::after {
@@ -403,7 +445,6 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
   color: #7fbce0;
 }
 
-/* --- オーバーレイ関連 --- */
 .overlay {
   position: fixed;
   top: 0;
@@ -425,7 +466,6 @@ body.bg-noon2 .title, body.bg-evening .title, body.bg-night .title, body.bg-midn
   pointer-events: auto;
 }
 
-/* MAX演出用の特別なオーバーレイ */
 #darkout {
   background: rgba(0,0,0,0.85);
   z-index: 900;
@@ -557,7 +597,11 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 <body>
 
-<div class="star-field"></div>
+<div class="star-field">
+  <div class="shooting-star star1"></div>
+  <div class="shooting-star star2"></div>
+  <div class="shooting-star star3"></div>
+</div>
 <div id="overlay" class="overlay"></div>
 <div id="darkout" class="overlay"></div>
 <div id="whiteout" class="overlay"></div>
@@ -589,6 +633,8 @@ input:checked + .slider:before { transform: translateX(20px); }
     <option value="evening">夕方</option>
     <option value="night">夜</option>
     <option value="midnight">深夜</option>
+    <option value="night1">夜(1日)</option>
+    <option value="midnight1">深夜(1日)</option>
     <option value="seasonal">季節</option>
     <option value="rare_normal">レア(通常)</option>
     <option value="rare_midnight">レア(深夜)</option>
@@ -632,12 +678,12 @@ input:checked + .slider:before { transform: translateX(20px); }
     <span style="font-family: var(--font-classic); font-size: 18px; color: #2a6fff; font-weight: 600;">データ引き継ぎ</span><br><br>
     <div style="font-size: 12px; color: #555; text-align: left; margin-bottom: 20px; line-height: 1.5; padding: 0 10px;">
       現在の親密度や図鑑のデータをファイルとして保存（エクスポート）したり、新しい端末で読み込んで（インポート）データを引き継ぐことができます。<br><br>
-      <span style="color: #d93030; font-weight: bold;">※インポートすると、現在の端末のデータは上書きされます。</span>
+      <span style="color: #d93030; font-weight: 600;">※インポートすると、現在の端末のデータは上書きされます。</span>
     </div>
     
-    <button onclick="exportData()" class="rem-input" style="display: block; margin: 0 auto 15px auto; cursor: pointer; border-color: #2a6fff; background: rgba(42, 111, 255, 0.05); color: #2a6fff; font-weight: bold;">データを保存する<br><span style="font-size:10px; font-weight:normal;">(エクスポート)</span></button>
+    <button onclick="exportData()" class="rem-input" style="display: block; margin: 0 auto 15px auto; cursor: pointer; border-color: #2a6fff; background: rgba(42, 111, 255, 0.05); color: #2a6fff; font-weight: 600;">データを保存する<br><span style="font-size:10px; font-weight:normal;">(エクスポート)</span></button>
     
-    <button onclick="document.getElementById('importFile').click()" class="rem-input" style="display: block; margin: 0 auto 10px auto; cursor: pointer; border-color: #ff7b7b; background: rgba(255, 123, 123, 0.05); color: #d93030; font-weight: bold;">データを読み込む<br><span style="font-size:10px; font-weight:normal;">(インポート)</span></button>
+    <button onclick="document.getElementById('importFile').click()" class="rem-input" style="display: block; margin: 0 auto 10px auto; cursor: pointer; border-color: #ff7b7b; background: rgba(255, 123, 123, 0.05); color: #d93030; font-weight: 600;">データを読み込む<br><span style="font-size:10px; font-weight:normal;">(インポート)</span></button>
     
     <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
   </div>
@@ -708,7 +754,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 </div>
 
 <script>
-// ===== セリフ群 =====
 const normalLines = [
 "今日は静かね",
 "市場のほうが盛り上がってるようね。ちょっと見に行ってみようかしら",
@@ -868,7 +913,6 @@ let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
 
 let currentDisplayedCharacter = "fubuki";
 
-// --- MAX演出用の状態管理 ---
 let maxEventState = parseInt(localStorage.getItem("maxEventState") || "0");
 if (maxEventState === 1) maxEventState = 0; 
 let maxEventClicks = 0;
@@ -914,12 +958,10 @@ function getTotalAffinity() {
 
 function updateAffinityUI() {
   const total = getTotalAffinity();
-  const currentHour = new Date().getHours(); // 追加
+  const currentHour = new Date().getHours(); 
   
-  // 変更：ツゲの時間ではない場合のみMAX演出を許可する
   if (total >= 3000 && currentHour !== tsugeHour) { 
     if (!document.body.classList.contains('affinity-max')) {
-      // ...そのまま...
       document.body.classList.remove('affinity-lv3');
       document.body.classList.add('affinity-max');
       checkMaxAffinityEvent();
@@ -1129,7 +1171,6 @@ function getFaceImage(text) {
   return "fubuki.png";
 }
 
-// 修正点：クラスのリセット方法を変更し、枠線の再読み込み（チカチカ）を防止
 function updateBackground() {
   const now = new Date();
   const hour = now.getHours();
@@ -1140,6 +1181,10 @@ function updateBackground() {
     const condition = document.getElementById("debugCondition").value;
     if (["morning", "noon1", "noon2", "evening", "night", "midnight"].includes(condition)) {
       targetZone = condition;
+    } else if (condition === "night1") {
+      targetZone = "night";
+    } else if (condition === "midnight1") {
+      targetZone = "midnight";
     }
   }
   
@@ -1149,11 +1194,27 @@ function updateBackground() {
   });
   classesToRemove.forEach(cls => document.body.classList.remove(cls));
   document.body.classList.add("bg-" + targetZone);
+
+  let showStars = false;
+  if (isDebugMode) {
+    const cond = document.getElementById("debugCondition").value;
+    if (cond === "night1" || cond === "midnight1") showStars = true;
+  } else {
+    if (now.getDate() === 1 && (targetZone === "night" || targetZone === "midnight")) {
+      showStars = true;
+    }
+  }
+  
+  if (showStars) {
+    document.body.classList.add("show-stars");
+  } else {
+    document.body.classList.remove("show-stars");
+  }
 }
 
 function updateCharacterPresence() {
   if (isDebugMode) return;
-  if (maxEventState === 1) return; // MAX演出中は割り込みスキップ
+  if (maxEventState === 1) return; 
   
   const now = new Date();
   const currentHour = now.getHours();
@@ -1274,6 +1335,7 @@ if (!isDebugMode && initialHour === tsugeHour) {
 }
 
 function saveReminders() {
+  allReminders = allReminders.filter(r => !r.isDismissed);
   localStorage.setItem("reminders", JSON.stringify(allReminders));
 }
 
@@ -2067,6 +2129,14 @@ function speak(){
         pool = [...timeLines[condition]];
         line = pick(pool);
         break;
+      case "night1":
+        pool = [...timeLines.night];
+        line = pick(pool);
+        break;
+      case "midnight1":
+        pool = [...timeLines.midnight];
+        line = pick(pool);
+        break;
       case "seasonal":
         pool = [...Object.values(eventLines).flat()];
         if (achievements.seasonal.unlocked && !pool.includes(achievements.seasonal.reward)) pool.push(achievements.seasonal.reward);
@@ -2129,7 +2199,6 @@ function showLine(text, isRare, isDynamic = false, forcedImage = null){
   const el = document.getElementById("speech");
   el.style.color = isRare ? "#2a6fff" : "#333";
   
-  // 修正点: ツゲの画像が指定された時だけツゲと判定するように変更
   if (forcedImage) {
     document.getElementById("img").src = forcedImage;
     if (forcedImage === "tsuge.png") {
@@ -2229,6 +2298,7 @@ document.getElementById("overlay").onclick = function(e) {
     }
   }
 };
+
 </script>
 
 </body>
