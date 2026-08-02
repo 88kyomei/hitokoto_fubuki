@@ -151,6 +151,7 @@ body.bg-midnight { background: linear-gradient(135deg, #141e30 0%, #243b55 100%)
   z-index: 1;
   opacity: 0;
   transition: opacity 1s ease;
+  overflow: hidden;
 }
 
 body.bg-night .star-field, body.bg-midnight .star-field { opacity: 1; }
@@ -175,26 +176,13 @@ body.bg-midnight .star-field::after {
   background-position: 150px 150px, 70px 110px;
 }
 
-.star-field {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 1s ease;
-  overflow: hidden; 
-}
-
 .shooting-star {
   position: absolute;
   height: 1px;
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
   border-radius: 1px;
   opacity: 0;
-  display: none; 
+  display: none;
 }
 
 body.show-stars .shooting-star {
@@ -245,6 +233,9 @@ body.show-stars .shooting-star {
   bottom: 20px;
   left: 20px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .main-menu-btn {
@@ -336,9 +327,10 @@ body.show-stars .shooting-star {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 60px;
+  gap: 20px;
   transition: 0.3s;
   z-index: 2;
+  padding-bottom: 40px;
 }
 
 .container {
@@ -353,6 +345,7 @@ body.show-stars .shooting-star {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: border-color 0.5s ease, box-shadow 0.5s ease;
   text-align: center;
+  margin-bottom: 40px;
 }
 
 .container::after {
@@ -552,7 +545,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   padding: 12px 16px;
   box-sizing: border-box;
   border-radius: 12px;
-  
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -582,6 +574,11 @@ input:checked + .slider:before { transform: translateX(20px); }
 .rem-time { font-family: var(--font-main); font-size: 12px; color: #666; }
 .rem-count { font-family: var(--font-main); position: absolute; top: 12px; right: 16px; font-size: 12px; color: #ff7b7b; }
 .rem-hint { font-family: var(--font-main); font-size: 10px; color: #aaa; margin-top: 8px; text-align: right; }
+
+.cd-long-pressed {
+  background: #f0f8ff;
+  border-color: #2a6fff;
+}
 
 .rem-input {
   padding: 8px;
@@ -614,6 +611,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 <div class="reminder-menu">
   <button onclick="openReminderCreateModal()">リマインダーを作成</button>
+  <button onclick="openCountdownCreateModal()">カウントダウンを追加</button>
 </div>
 
 <div class="debug-toggle-container">
@@ -710,12 +708,24 @@ input:checked + .slider:before { transform: translateX(20px); }
   <button class="closeBtn" onclick="closeReminderCreateModal()">×</button>
   <div style="text-align: center; margin-top: 20px;">
     <span style="font-size: 18px; color: #2a6fff; font-family: var(--font-classic); font-weight: 600;">新しいリマインダー</span><br><br>
-    <input type="text" id="remTitleInput" class="rem-input" placeholder="タイトル (例: レポート提出)"><br>
+    <input type="text" id="remTitleInput" class="rem-input" placeholder="タイトル (例: レポート提出)" maxlength="20"><br>
     <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
       <input type="date" id="remDateInput" class="rem-input" style="width: auto; padding: 6px;">
       <input type="time" id="remTimeInput" class="rem-input" style="width: auto; padding: 6px;">
     </div>
     <button onclick="saveNewReminder()" style="padding: 6px 20px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">作成</button>
+  </div>
+</div>
+
+<div id="countdownCreateModal" class="log">
+  <button class="closeBtn" onclick="closeCountdownCreateModal()">×</button>
+  <div style="text-align: center; margin-top: 20px;">
+    <span style="font-size: 18px; color: #2a6fff; font-family: var(--font-classic); font-weight: 600;">カウントダウンを追加</span><br><br>
+    <input type="text" id="cdTitleInput" class="rem-input" placeholder="予定 (例: 卒業旅行)" maxlength="20"><br>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
+      <input type="date" id="cdDateInput" class="rem-input" style="width: auto; padding: 6px;">
+    </div>
+    <button onclick="saveNewCountdown()" style="padding: 6px 20px; border: 1px solid #7fbce0; background: rgba(255,255,255,0.5); border-radius: 4px; cursor: pointer;">作成</button>
   </div>
 </div>
 
@@ -749,6 +759,13 @@ input:checked + .slider:before { transform: translateX(20px); }
     <div class="rem-count" id="remCountText">1/1</div>
     <div class="rem-title" id="remTitleText">タイトル</div>
     <div class="rem-time" id="remTimeText">日時</div>
+    <div class="rem-hint">長押し+下で消去 / 左右で切替</div>
+  </div>
+
+  <div id="countdownDisplay" class="reminder-display" style="display: none; border-left-color: #2a6fff;">
+    <div class="rem-count" id="cdCountText" style="color: #2a6fff;">1/1</div>
+    <div class="rem-title" id="cdTitleText" style="color: #2a6fff;">タイトル</div>
+    <div class="rem-time" id="cdTimeText">あと 0 日</div>
     <div class="rem-hint">長押し+下で消去 / 左右で切替</div>
   </div>
 </div>
@@ -908,6 +925,11 @@ let allReminders = JSON.parse(localStorage.getItem("reminders") || "[]").filter(
 localStorage.setItem("reminders", JSON.stringify(allReminders));
 let activeReminders = [];
 let currentRemIndex = 0;
+
+let allCountdowns = JSON.parse(localStorage.getItem("countdowns") || "[]").filter(c => !c.isDismissed);
+localStorage.setItem("countdowns", JSON.stringify(allCountdowns));
+let activeCountdowns = [];
+let currentCdIndex = 0;
 
 let dynamicAffinity = JSON.parse(localStorage.getItem("dynamicAffinity") || '{"points":0, "lastLoginDate":"", "consecutiveDays":0, "todayReminderCount":0, "lastReminderDate":""}');
 let todayGreetedDate = localStorage.getItem("todayGreetedDate") || "";
@@ -1178,14 +1200,22 @@ function updateBackground() {
   const zone = getZone(hour);
   
   let targetZone = zone;
+  let showStars = false;
+
   if (isDebugMode) {
     const condition = document.getElementById("debugCondition").value;
     if (["morning", "noon1", "noon2", "evening", "night", "midnight"].includes(condition)) {
       targetZone = condition;
     } else if (condition === "night1") {
       targetZone = "night";
+      showStars = true;
     } else if (condition === "midnight1") {
       targetZone = "midnight";
+      showStars = true;
+    }
+  } else {
+    if (now.getDate() === 1 && (targetZone === "night" || targetZone === "midnight")) {
+      showStars = true;
     }
   }
   
@@ -1196,16 +1226,6 @@ function updateBackground() {
   classesToRemove.forEach(cls => document.body.classList.remove(cls));
   document.body.classList.add("bg-" + targetZone);
 
-  let showStars = false;
-  if (isDebugMode) {
-    const cond = document.getElementById("debugCondition").value;
-    if (cond === "night1" || cond === "midnight1") showStars = true;
-  } else {
-    if (now.getDate() === 1 && (targetZone === "night" || targetZone === "midnight")) {
-      showStars = true;
-    }
-  }
-  
   if (showStars) {
     document.body.classList.add("show-stars");
   } else {
@@ -1340,7 +1360,16 @@ function saveReminders() {
   localStorage.setItem("reminders", JSON.stringify(allReminders));
 }
 
+function saveCountdowns() {
+  allCountdowns = allCountdowns.filter(c => !c.isDismissed);
+  localStorage.setItem("countdowns", JSON.stringify(allCountdowns));
+}
+
 function openReminderCreateModal() {
+  if (allReminders.length >= 5) {
+    alert("リマインダーは5つまでしか登録できません。不要なものを消去してください。");
+    return;
+  }
   const modal = document.getElementById("reminderCreateModal");
   document.getElementById("overlay").style.display = "block";
   modal.style.display = "block";
@@ -1372,6 +1401,11 @@ function saveNewReminder() {
 
   if (!title || !date || !time) {
     alert("タイトル、日付、時間をすべて入力してください。");
+    return;
+  }
+
+  if (allReminders.length >= 5) {
+    alert("リマインダーは5つまでしか登録できません。");
     return;
   }
 
@@ -1411,8 +1445,7 @@ function checkActiveReminders() {
   const now = new Date();
   activeReminders = allReminders
     .filter(r => !r.isDismissed && new Date(r.time) <= now)
-    .sort((a, b) => new Date(a.time) - new Date(b.time))
-    .slice(0, 5);
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
 
   const display = document.getElementById("reminderDisplay");
   if (activeReminders.length > 0) {
@@ -1433,6 +1466,94 @@ function updateReminderContent() {
   document.getElementById("remCountText").textContent = `${currentRemIndex + 1} / ${activeReminders.length}`;
   document.getElementById("remTitleText").textContent = r.title;
   document.getElementById("remTimeText").textContent = timeStr;
+}
+
+function openCountdownCreateModal() {
+  if (allCountdowns.length >= 5) {
+    alert("カウントダウンは5つまでしか登録できません。不要なものを消去してください。");
+    return;
+  }
+  const modal = document.getElementById("countdownCreateModal");
+  document.getElementById("overlay").style.display = "block";
+  modal.style.display = "block";
+  
+  const now = new Date();
+  const todayDate = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+  document.getElementById("cdDateInput").value = todayDate;
+  
+  setTimeout(() => {
+    document.getElementById("overlay").classList.add("show");
+    modal.classList.add("show");
+  }, 10);
+}
+
+function closeCountdownCreateModal() {
+  const modal = document.getElementById("countdownCreateModal");
+  modal.classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }, 200);
+}
+
+function saveNewCountdown() {
+  const title = document.getElementById("cdTitleInput").value;
+  const date = document.getElementById("cdDateInput").value;
+
+  if (!title || !date) {
+    alert("予定と日付をすべて入力してください。");
+    return;
+  }
+
+  if (allCountdowns.length >= 5) {
+    alert("カウントダウンは5つまでしか登録できません。");
+    return;
+  }
+
+  allCountdowns.push({
+    id: Date.now(),
+    title: title,
+    date: date,
+    isDismissed: false
+  });
+  saveCountdowns();
+
+  document.getElementById("cdTitleInput").value = "";
+  closeCountdownCreateModal();
+  checkActiveCountdowns();
+}
+
+function checkActiveCountdowns() {
+  activeCountdowns = allCountdowns
+    .filter(c => !c.isDismissed)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const display = document.getElementById("countdownDisplay");
+  if (activeCountdowns.length > 0) {
+    if (currentCdIndex >= activeCountdowns.length) currentCdIndex = 0;
+    display.style.display = "block";
+    updateCountdownContent();
+  } else {
+    display.style.display = "none";
+  }
+}
+
+function updateCountdownContent() {
+  if (activeCountdowns.length === 0) return;
+  const c = activeCountdowns[currentCdIndex];
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(c.date);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = targetDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  document.getElementById("cdCountText").textContent = `${currentCdIndex + 1} / ${activeCountdowns.length}`;
+  document.getElementById("cdTitleText").textContent = c.title;
+  document.getElementById("cdTimeText").textContent = `あと ${diffDays} 日`;
 }
 
 let remStartX=0, remStartY=0, remCurX=0, remCurY=0;
@@ -1552,9 +1673,125 @@ function dismissCurrentReminder() {
   }, 300);
 }
 
+let cdStartX=0, cdStartY=0, cdCurX=0, cdCurY=0;
+let cdDragging = false;
+let cdLongPressTimer = null;
+let cdLongPressed = false;
+const cdDisplay = document.getElementById("countdownDisplay");
+
+cdDisplay.addEventListener("pointerdown", (e) => {
+  cdDragging = true;
+  cdStartX = e.clientX;
+  cdStartY = e.clientY;
+  cdLongPressed = false;
+  cdDisplay.setPointerCapture(e.pointerId);
+  cdDisplay.style.transition = "none";
+
+  cdLongPressTimer = setTimeout(() => {
+    if (cdDragging) {
+      cdLongPressed = true;
+      cdDisplay.classList.add("cd-long-pressed");
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+  }, 400); 
+});
+
+cdDisplay.addEventListener("pointermove", (e) => {
+  if (!cdDragging) return;
+  cdCurX = e.clientX;
+  cdCurY = e.clientY;
+  let dx = cdCurX - cdStartX;
+  let dy = cdCurY - cdStartY;
+
+  if (!cdLongPressed && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+    clearTimeout(cdLongPressTimer);
+  }
+
+  if (cdLongPressed) {
+    if (dy > 0) cdDisplay.style.transform = `scale(0.95) translateY(${dy}px)`;
+  } else {
+    cdDisplay.style.transform = `translateX(${dx}px)`;
+  }
+});
+
+cdDisplay.addEventListener("pointerup", endCdDrag);
+cdDisplay.addEventListener("pointercancel", endCdDrag);
+
+function endCdDrag(e) {
+  if (!cdDragging) return;
+  cdDragging = false;
+  clearTimeout(cdLongPressTimer);
+  cdDisplay.classList.remove("cd-long-pressed");
+
+  let dx = cdCurX - cdStartX;
+  let dy = cdCurY - cdStartY;
+  
+  if (cdLongPressed) {
+    cdDisplay.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+    if (dy > 50) {
+      dismissCurrentCountdown();
+    } else {
+      cdDisplay.style.transform = "translate(0px, 0px)";
+    }
+  } else {
+    if (dx > 50) {
+      cycleCountdown(1);
+    } else if (dx < -50) {
+      cycleCountdown(-1);
+    } else {
+      cdDisplay.style.transition = "transform 0.3s ease";
+      cdDisplay.style.transform = "translate(0px, 0px)";
+    }
+  }
+}
+
+function cycleCountdown(dir) {
+  if (activeCountdowns.length <= 1) {
+    cdDisplay.style.transition = "transform 0.3s ease";
+    cdDisplay.style.transform = "translate(0px, 0px)";
+    return;
+  }
+  
+  const exitX = dir > 0 ? 300 : -300;
+  const enterX = dir > 0 ? -300 : 300;
+
+  cdDisplay.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+  cdDisplay.style.transform = `translateX(${exitX}px)`;
+  cdDisplay.style.opacity = "0";
+
+  setTimeout(() => {
+    currentCdIndex = (currentCdIndex + dir + activeCountdowns.length) % activeCountdowns.length;
+    updateCountdownContent();
+
+    cdDisplay.style.transition = "none";
+    cdDisplay.style.transform = `translateX(${enterX}px)`;
+    void cdDisplay.offsetWidth;
+
+    cdDisplay.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+    cdDisplay.style.transform = "translate(0px, 0px)";
+    cdDisplay.style.opacity = "1";
+  }, 200);
+}
+
+function dismissCurrentCountdown() {
+  const c = activeCountdowns[currentCdIndex];
+  c.isDismissed = true;
+  saveCountdowns();
+  
+  cdDisplay.style.transform = "scale(0.8) translateY(100px)";
+  cdDisplay.style.opacity = "0";
+  
+  setTimeout(() => {
+    cdDisplay.style.transform = "translate(0px, 0px)";
+    cdDisplay.style.opacity = "1";
+    checkActiveCountdowns();
+  }, 300);
+}
+
 setInterval(() => {
   checkTsugeTime();
   checkActiveReminders();
+  checkActiveCountdowns();
   updateBackground();
   updateCharacterPresence();
   updateAffinityUI();
@@ -1610,7 +1847,7 @@ function closeDataModal() {
 }
 
 function exportData() {
-  const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate", "maxEventState"];
+  const keys = ["seen", "dynamicAffinity", "reminders", "countdowns", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate", "maxEventState"];
   const exportObj = {};
   keys.forEach(k => {
     exportObj[k] = localStorage.getItem(k);
@@ -1639,7 +1876,7 @@ function importData(event) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      const keys = ["seen", "dynamicAffinity", "reminders", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate", "maxEventState"];
+      const keys = ["seen", "dynamicAffinity", "reminders", "countdowns", "userBirthday", "unlockedSongs", "tsugeHour", "tsugeDate", "todayGreetedDate", "maxEventState"];
       
       let hasData = false;
       keys.forEach(k => {
@@ -2042,9 +2279,8 @@ function speak(){
     }
     tsugeLastClickTime = nowTime;
 
-    const pendingRems = allReminders.filter(r => !r.isDismissed);
-    if (pendingRems.length > 0 && Math.random() < 0.15) {
-      const randomRem = pick(pendingRems);
+    if (activeReminders.length > 0 && Math.random() < 0.15) {
+      const randomRem = pick(activeReminders);
       const line = `…${randomRem.title}、早くやれよ`;
       showLine(line, false, true, "tsuge.png");
       return;
@@ -2109,9 +2345,8 @@ function speak(){
   let line;
   let isRare = false;
 
-  const pendingRems = allReminders.filter(r => !r.isDismissed);
-  if (!isDebugMode && pendingRems.length > 0 && Math.random() < 0.15) {
-    const randomRem = pick(pendingRems);
+  if (!isDebugMode && activeReminders.length > 0 && Math.random() < 0.15) {
+    const randomRem = pick(activeReminders);
     line = `${randomRem.title}は大丈夫なの？`;
     showLine(line, false, true);
     return;
@@ -2288,6 +2523,8 @@ document.getElementById("overlay").onclick = function(e) {
       closeBirthdayModal();
     } else if (document.getElementById("reminderCreateModal").classList.contains("show")) {
       closeReminderCreateModal();
+    } else if (document.getElementById("countdownCreateModal").classList.contains("show")) {
+      closeCountdownCreateModal();
     } else if (document.getElementById("musicRoomModal").classList.contains("show")) {
       closeMusicRoomModal();
     } else if (document.getElementById("mainMenuModal").classList.contains("show")) {
@@ -2299,6 +2536,10 @@ document.getElementById("overlay").onclick = function(e) {
     }
   }
 };
+
+// ページを開いた直後に一度だけリマインダーとカウントダウンをチェック
+checkActiveReminders();
+checkActiveCountdowns();
 
 </script>
 
