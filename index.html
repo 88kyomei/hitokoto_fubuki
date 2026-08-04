@@ -589,6 +589,29 @@ input:checked + .slider:before { transform: translateX(20px); }
   box-sizing: border-box;
   font-family: var(--font-main);
 }
+
+body.aug5-mode .title {
+  color: #f0f8ff !important;
+  text-shadow: 0 0 10px #7fbce0, 0 0 20px #2a6fff, 0 0 30px #2a6fff !important;
+}
+
+.zmtq-special {
+  border-color: #2a6fff !important;
+  border-left: 6px solid #2a6fff !important;
+  box-shadow: 0 0 15px rgba(42,111,255,0.4), inset 0 0 10px rgba(42,111,255,0.2) !important;
+}
+.zmtq-special .rem-title, .zmtq-special .rem-count {
+  color: #2a6fff !important;
+}
+
+body.show-stars .shooting-star.aug5-star { display: none; }
+body.show-stars.aug5-mode .shooting-star.aug5-star { display: block; }
+
+.star4 { top: 20%; left: 70%; width: 70px; animation: shoot 8s infinite 2s; }
+.star5 { top: 40%; left: 85%; width: 90px; animation: shoot 12s infinite 4s; }
+.star6 { top: 5%;  left: 60%; width: 50px; animation: shoot 10s infinite 7s; }
+.star7 { top: 25%; left: 50%; width: 80px; animation: shoot 14s infinite 9s; }
+
 </style>
 </head>
 
@@ -598,6 +621,10 @@ input:checked + .slider:before { transform: translateX(20px); }
   <div class="shooting-star star1"></div>
   <div class="shooting-star star2"></div>
   <div class="shooting-star star3"></div>
+  <div class="shooting-star aug5-star star4"></div>
+  <div class="shooting-star aug5-star star5"></div>
+  <div class="shooting-star aug5-star star6"></div>
+  <div class="shooting-star aug5-star star7"></div>
 </div>
 <div id="overlay" class="overlay"></div>
 <div id="darkout" class="overlay"></div>
@@ -636,6 +663,9 @@ input:checked + .slider:before { transform: translateX(20px); }
     <option value="seasonal">季節</option>
     <option value="rare_normal">レア(通常)</option>
     <option value="rare_midnight">レア(深夜)</option>
+    <label style="font-size: 12px; margin-top: 8px; color: #333; cursor: pointer;">
+    <input type="checkbox" id="debugAug5" onchange="updateBackground(); checkActiveReminders(); checkActiveCountdowns();"> 8/5演出テスト
+  </label>
   </select>
   <button onclick="resetNormalHistory()" style="margin-top: 8px;">通常履歴リセット</button>
 </div>
@@ -940,6 +970,13 @@ let maxEventState = parseInt(localStorage.getItem("maxEventState") || "0");
 if (maxEventState === 1) maxEventState = 0; 
 let maxEventClicks = 0;
 let maxEventActive = false;
+let zmtqEventStep = 0;
+
+function checkIsAug5() {
+  const now = new Date();
+  return (now.getMonth() + 1 === 8 && now.getDate() === 5) || 
+         (isDebugMode && document.getElementById("debugAug5") && document.getElementById("debugAug5").checked);
+}
 
 function normalizeStr(str) {
   return str.replace(/[\s ]+/g, "");
@@ -1218,6 +1255,10 @@ function updateBackground() {
       showStars = true;
     }
   }
+
+  if (checkIsAug5() && (targetZone === "night" || targetZone === "midnight")) {
+    showStars = true;
+  }
   
   const classesToRemove = [];
   document.body.classList.forEach(cls => {
@@ -1231,7 +1272,51 @@ function updateBackground() {
   } else {
     document.body.classList.remove("show-stars");
   }
+
+  if (checkIsAug5()) {
+    document.body.classList.add("aug5-mode");
+  } else {
+    document.body.classList.remove("aug5-mode");
+    zmtqEventStep = 0;
+  }
 }
+
+  const now = new Date();
+  const hour = now.getHours();
+  const zone = getZone(hour);
+  
+  let targetZone = zone;
+  let showStars = false;
+
+  if (isDebugMode) {
+    const condition = document.getElementById("debugCondition").value;
+    if (["morning", "noon1", "noon2", "evening", "night", "midnight"].includes(condition)) {
+      targetZone = condition;
+    } else if (condition === "night1") {
+      targetZone = "night";
+      showStars = true;
+    } else if (condition === "midnight1") {
+      targetZone = "midnight";
+      showStars = true;
+    }
+  } else {
+    if (now.getDate() === 1 && (targetZone === "night" || targetZone === "midnight")) {
+      showStars = true;
+    }
+  }
+  
+  const classesToRemove = [];
+  document.body.classList.forEach(cls => {
+    if (cls.startsWith('bg-')) classesToRemove.push(cls);
+  });
+  classesToRemove.forEach(cls => document.body.classList.remove(cls));
+  document.body.classList.add("bg-" + targetZone);
+
+  if (showStars) {
+    document.body.classList.add("show-stars");
+  } else {
+    document.body.classList.remove("show-stars");
+  }
 
 function updateCharacterPresence() {
   if (isDebugMode) return;
@@ -1417,6 +1502,14 @@ function saveNewReminder() {
     isDismissed: false
   });
   saveReminders();
+
+  if (checkIsAug5() && title.includes("ゼミつく")) {
+    zmtqEventStep = 1;
+    document.getElementById("remTitleInput").value = "";
+    closeReminderCreateModal();
+    checkActiveReminders();
+    return;
+  }
   
   const sortedNG1 = [...ngWords1].sort((a,b) => b.length - a.length);
   const sortedNG2 = [...ngWords2].sort((a,b) => b.length - a.length);
@@ -1466,6 +1559,12 @@ function updateReminderContent() {
   document.getElementById("remCountText").textContent = `${currentRemIndex + 1} / ${activeReminders.length}`;
   document.getElementById("remTitleText").textContent = r.title;
   document.getElementById("remTimeText").textContent = timeStr;
+  const display = document.getElementById("reminderDisplay");
+  if (checkIsAug5() && (r.title.includes("ゼミつく6周年") || r.title.includes("ゼミつく６周年"))) {
+    display.classList.add("zmtq-special");
+  } else {
+    display.classList.remove("zmtq-special");
+  }
 }
 
 function openCountdownCreateModal() {
@@ -1554,6 +1653,12 @@ function updateCountdownContent() {
   document.getElementById("cdCountText").textContent = `${currentCdIndex + 1} / ${activeCountdowns.length}`;
   document.getElementById("cdTitleText").textContent = c.title;
   document.getElementById("cdTimeText").textContent = `あと ${diffDays} 日`;
+  const display = document.getElementById("countdownDisplay");
+  if (checkIsAug5() && (c.title.includes("ゼミつく6周年") || c.title.includes("ゼミつく６周年"))) {
+    display.classList.add("zmtq-special");
+  } else {
+    display.classList.remove("zmtq-special");
+  }
 }
 
 let remStartX=0, remStartY=0, remCurX=0, remCurY=0;
@@ -2266,6 +2371,20 @@ function speak(){
     return;
   }
   
+  if (zmtqEventStep > 0) {
+    if (zmtqEventStep === 1) {
+      showLine("…ゼミつくって言った？", false, true, "fubuki_remember.png");
+      zmtqEventStep = 2;
+    } else if (zmtqEventStep === 2) {
+      showLine("…あなたも覚えているのね", false, true, "fubuki_smile.png");
+      zmtqEventStep = 3;
+    } else if (zmtqEventStep === 3) {
+      showLine("忘れられるわけないか", false, true, "fubuki_smile.png");
+      zmtqEventStep = 0; 
+    }
+    return;
+  }
+
   const now = new Date();
   const currentHour = now.getHours();
 
@@ -2537,7 +2656,6 @@ document.getElementById("overlay").onclick = function(e) {
   }
 };
 
-// ページを開いた直後に一度だけリマインダーとカウントダウンをチェック
 checkActiveReminders();
 checkActiveCountdowns();
 
